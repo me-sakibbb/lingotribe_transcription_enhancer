@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Text Enhancer Settings</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 2rem; background: #f9f9f9; max-width: 800px; margin: 0 auto; }
+    h1 { border-bottom: 2px solid #3e8e41; padding-bottom: 10px; color: #333; }
+    h2 { color: #555; margin-top: 2rem; }
+    
+    .section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    label { display: block; margin: 10px 0; font-weight: 500; }
+    input[type="text"], textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    
+    .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .row input { flex: 1; }
+    button { padding: 8px 16px; background: #3e8e41; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #2c662e; }
+    button.remove { background: #d32f2f; }
+    button.remove:hover { background: #9a0007; }
+    
+    .list-container { max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px; }
+    
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: #fff; padding: 10px 20px; border-radius: 4px; opacity: 0; transition: opacity 0.3s; }
+  </style>
+</head>
+<body>
+
+  <h1>Text Enhancer Pro Settings</h1>
+
+  <div class="section">
+    <h2>General</h2>
+    <label>
+      <input type="checkbox" id="enabled"> Enable Extension
+    </label>
+  </div>
+
+  <div class="section">
+    <h2>Autocomplete Shortcuts</h2>
+    <p>Type the key, and the extension will suggest the value.</p>
+    <div id="shortcuts-list" class="list-container"></div>
+    <div class="row" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+      <input type="text" id="new-shortcut-key" placeholder="Shortcut (e.g. 'brb')">
+      <input type="text" id="new-shortcut-val" placeholder="Expansion (e.g. 'Be Right Back')">
+      <button id="add-shortcut">Add</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Word Replacements</h2>
+    <p>Automatically replaces words when you press Space.</p>
+    <div id="replacements-list" class="list-container"></div>
+    <div class="row" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+      <input type="text" id="new-replace-key" placeholder="Typo (e.g. 'teh')">
+      <input type="text" id="new-replace-val" placeholder="Correction (e.g. 'the')">
+      <button id="add-replace">Add</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Floating Word Picker Items</h2>
+    <p>Items to appear in the draggable floating window (Alt+P).</p>
+    <textarea id="picker-items" rows="5" placeholder="Enter items, one per line"></textarea>
+  </div>
+
+  <div class="section">
+    <h2>Formatting Rules (Alt+F)</h2>
+    <label><input type="checkbox" id="fmt-caps"> Auto-Capitalize Sentences</label>
+    <label><input type="checkbox" id="fmt-space"> Remove Double Spaces</label>
+    <label><input type="checkbox" id="fmt-quote"> Smart Quotes</label>
+  </div>
+
+  <button id="save-btn" style="width: 100%; font-size: 1.2rem; margin-top: 20px;">Save Settings</button>
+
+  <div id="toast" class="toast">Settings Saved!</div>
+
+  <script src="options.js"></script>
+</body>
+</html>

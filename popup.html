@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 200px; padding: 10px; font-family: sans-serif; }
+    button { width: 100%; padding: 10px; margin-bottom: 5px; cursor: pointer; background: #eee; border: none; border-radius: 4px; }
+    button:hover { background: #ddd; }
+    .primary { background: #3e8e41; color: white; }
+    .primary:hover { background: #2c662e; }
+  </style>
+</head>
+<body>
+  <h3 style="margin-top:0">Text Enhancer</h3>
+  <button id="toggle" class="primary">Disable</button>
+  <button id="options">Open Settings</button>
+  
+  <script>
+    const toggleBtn = document.getElementById('toggle');
+    
+    chrome.storage.sync.get(['enabled'], (data) => {
+      updateBtn(data.enabled);
+    });
+    
+    toggleBtn.onclick = () => {
+      chrome.storage.sync.get(['enabled'], (data) => {
+        const newState = !data.enabled;
+        chrome.storage.sync.set({ enabled: newState }, () => {
+          updateBtn(newState);
+        });
+      });
+    };
+    
+    document.getElementById('options').onclick = () => {
+      chrome.runtime.openOptionsPage();
+    };
+    
+    function updateBtn(enabled) {
+      toggleBtn.textContent = enabled ? "Disable Extension" : "Enable Extension";
+      toggleBtn.style.background = enabled ? "#3e8e41" : "#d32f2f";
+    }
+  </script>
+</body>
+</html>
