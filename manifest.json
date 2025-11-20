@@ -3,6 +3,8 @@
   "name": "Text Enhancer Pro",
   "version": "1.0.0",
   "description": "Autocomplete, formatting, and smart text tools for the web.",
+  "author": "me-sakibbb",
+  "homepage_url": "https://github.com/me-sakibbb/lingotribe_transcription_enhancer",
   "permissions": [
     "storage",
     "activeTab",

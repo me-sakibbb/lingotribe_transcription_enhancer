@@ -139,13 +139,27 @@ Contributions are welcome! Feel free to:
 
 ## 📝 License
 
-MIT License - see the [LICENSE](LICENSE) file for details.
+**Copyright (c) 2025 me-sakibbb - All Rights Reserved**
 
-Copyright (c) 2025 me-sakibbb
+This extension is proprietary software. See the [LICENSE](LICENSE) file for full terms.
+
+**Usage Rights:**
+- ✅ Personal use allowed (with attribution)
+- ✅ Educational use allowed (with attribution)
+- ⚠️ Commercial use requires written permission
+- ⚠️ Distribution/modification requires written permission
+
+**Attribution Required:**
+When using this software, you must:
+1. Credit me-sakibbb as the original author
+2. Link to: https://github.com/me-sakibbb/lingotribe_transcription_enhancer
+3. Indicate if any changes were made
+
+For commercial use or distribution permissions, contact via GitHub.
 
 ## 🙏 Acknowledgments
 
-Created for LingoTribe transcription workflow optimization.
+Created by me-sakibbb for LingoTribe transcription workflow optimization.
 
 ---
 
