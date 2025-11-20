@@ -1,6 +1,21 @@
 // content.js
 // The core logic for handling text input, UI injection, and text manipulation.
 
+// Attribution Notice
+console.log(
+  '%c🚀 Lingotribe Transcription Enhancer %cv1.0.0',
+  'color: #3e8e41; font-weight: bold; font-size: 14px;',
+  'color: #666; font-size: 12px;'
+);
+console.log(
+  '%cCreated by me-sakibbb',
+  'color: #999; font-size: 11px;'
+);
+console.log(
+  '%c© 2025 All Rights Reserved | https://github.com/me-sakibbb/lingotribe_transcription_enhancer',
+  'color: #999; font-size: 10px;'
+);
+
 (async function() {
   // --- State & Config ---
   let settings = {};

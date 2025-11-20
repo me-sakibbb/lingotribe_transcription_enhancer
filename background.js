@@ -1,5 +1,5 @@
 // background.js
-// Handles installation and default settings initialization.
+// Handles installation and default settings initialization for Lingotribe Transcription Enhancer.
 
 const DEFAULT_SETTINGS = {
   shortcuts: {
@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS = {
 };
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Text Enhancer Extension Installed");
+  console.log("Lingotribe Transcription Enhancer Installed");
   
   // Initialize settings if they don't exist
   chrome.storage.sync.get(null, (items) => {

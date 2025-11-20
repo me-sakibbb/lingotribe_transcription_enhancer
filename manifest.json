@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Text Enhancer Pro",
+  "name": "Lingotribe Transcription Enhancer",
   "version": "1.0.0",
-  "description": "Autocomplete, formatting, and smart text tools for the web.",
+  "description": "Professional transcription enhancement with auto-correct, formatting, and smart text tools.",
   "author": "me-sakibbb",
   "homepage_url": "https://github.com/me-sakibbb/lingotribe_transcription_enhancer",
   "permissions": [
