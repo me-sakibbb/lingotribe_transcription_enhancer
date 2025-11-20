@@ -3,12 +3,12 @@
 
 // Attribution Notice
 console.log(
-  '%c🚀 Lingotribe Transcription Enhancer %cv1.0.0',
+  '%c🚀 Lingotribe Transcription Enhancer %cv2.1.0',
   'color: #3e8e41; font-weight: bold; font-size: 14px;',
   'color: #666; font-size: 12px;'
 );
 console.log(
-  '%cCreated by me-sakibbb',
+  '%cCreated by me-sakibbb & NuhalMunawar',
   'color: #999; font-size: 11px;'
 );
 console.log(

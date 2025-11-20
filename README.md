@@ -139,7 +139,7 @@ Contributions are welcome! Feel free to:
 
 ## 📝 License
 
-**Copyright (c) 2025 me-sakibbb - All Rights Reserved**
+**Copyright (c) 2025 me-sakibbb & NuhalMunawar - All Rights Reserved**
 
 This extension is proprietary software. See the [LICENSE](LICENSE) file for full terms.
 
@@ -151,7 +151,7 @@ This extension is proprietary software. See the [LICENSE](LICENSE) file for full
 
 **Attribution Required:**
 When using this software, you must:
-1. Credit me-sakibbb as the original author
+1. Credit me-sakibbb and NuhalMunawar as the original authors
 2. Link to: https://github.com/me-sakibbb/lingotribe_transcription_enhancer
 3. Indicate if any changes were made
 
@@ -159,11 +159,11 @@ For commercial use or distribution permissions, contact via GitHub.
 
 ## 🙏 Acknowledgments
 
-Created by me-sakibbb for LingoTribe transcription workflow optimization.
+Created by me-sakibbb and NuhalMunawar for LingoTribe transcription workflow optimization.
 
 ---
 
-**Version:** 1.0.0  
+**Version:** 2.1.0  
 **Last Updated:** November 2025
 
 For support or questions, please open an issue in the repository.
