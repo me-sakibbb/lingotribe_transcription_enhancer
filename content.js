@@ -272,18 +272,71 @@
 
   const insertTextAtCursor = (text) => {
     if (!activeElement) return;
-
-    if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
-      const val = activeElement.value;
-      const sel = getInputSelection(activeElement);
-      const start = sel.start;
-      const end = sel.end;
-      activeElement.value = val.substring(0, start) + text + val.substring(end);
-      activeElement.selectionStart = activeElement.selectionEnd = start + text.length;
-      activeElement.dispatchEvent(new Event('input', { bubbles: true })); // Trigger frameworks like React
-    } else if (activeElement.isContentEditable) {
-      document.execCommand('insertText', false, text);
+    
+    console.log('[Content Script] insertTextAtCursor called with:', text);
+    
+    // Use keyboard simulation for all types
+    activeElement.focus();
+    
+    // Type each character with full keyboard event simulation
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      
+      const keydownEvent = new KeyboardEvent('keydown', {
+        key: char,
+        code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+        keyCode: char.charCodeAt(0),
+        which: char.charCodeAt(0),
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      });
+      const keypressEvent = new KeyboardEvent('keypress', {
+        key: char,
+        code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+        keyCode: char.charCodeAt(0),
+        which: char.charCodeAt(0),
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      });
+      const keyupEvent = new KeyboardEvent('keyup', {
+        key: char,
+        code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+        keyCode: char.charCodeAt(0),
+        which: char.charCodeAt(0),
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      });
+      
+      activeElement.dispatchEvent(keydownEvent);
+      activeElement.dispatchEvent(keypressEvent);
+      
+      // For INPUT/TEXTAREA, manually insert character
+      if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        const start = activeElement.selectionStart;
+        const end = activeElement.selectionEnd;
+        activeElement.value = activeElement.value.substring(0, start) + char + activeElement.value.substring(end);
+        activeElement.selectionStart = activeElement.selectionEnd = start + 1;
+      } else {
+        // For contentEditable, use execCommand which is more reliable than manual DOM manipulation
+        document.execCommand('insertText', false, char);
+      }
+      
+      // Dispatch input event
+      const inputEvent = new InputEvent('input', {
+        data: char,
+        inputType: 'insertText',
+        bubbles: true,
+        cancelable: false,
+        composed: true
+      });
+      activeElement.dispatchEvent(inputEvent);
+      activeElement.dispatchEvent(keyupEvent);
     }
+    
+    console.log('[Content Script] insertTextAtCursor complete');
   };
 
   const replaceLastWord = (original, replacement) => {
@@ -357,6 +410,20 @@
     if (e.altKey && (e.key === 'r' || e.key === 'R')) {
       e.preventDefault();
       applyReplacementsToActiveElement();
+      return;
+    }
+
+    // Hotkey for All (Replacements + Formatting): Alt+A
+    if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+      e.preventDefault();
+      applyAllTransformations();
+      return;
+    }
+
+    // Hotkey for Number Conversion: Alt+N
+    if (e.altKey && (e.key === 'n' || e.key === 'N')) {
+      e.preventDefault();
+      convertWordsToNumbers();
       return;
     }
 
@@ -467,77 +534,125 @@
   // Replace all configured replacement keys inside the active element (used by Alt+R)
   function applyReplacementsToActiveElement() {
     if (!activeElement || !settings.replacements) return;
+    
+    console.log('[Content Script] applyReplacementsToActiveElement called');
+    
     if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
-      let val = activeElement.value;
+      // Get current selection or use entire text
+      const sel = getInputSelection(activeElement);
+      const hasSelection = sel.start !== sel.end;
+      let textToReplace = hasSelection ? 
+        activeElement.value.substring(sel.start, sel.end) : 
+        activeElement.value;
+      
+      console.log('[Content Script] Original text:', textToReplace);
+      
+      // Apply all replacements
+      let newText = textToReplace;
       Object.keys(settings.replacements).forEach(k => {
         const escaped = escapeRegExp(k);
         const re = new RegExp('\\b' + escaped + '\\b', 'gi');
-        val = val.replace(re, settings.replacements[k]);
+        newText = newText.replace(re, settings.replacements[k]);
       });
-      if (val !== activeElement.value) {
-        activeElement.value = val;
-        activeElement.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      console.log('[Content Script] New text:', newText);
+      
+      if (newText !== textToReplace) {
+        // Select the text to replace
+        if (!hasSelection) {
+          activeElement.selectionStart = 0;
+          activeElement.selectionEnd = activeElement.value.length;
+        }
+        
+        // Use keyboard simulation to replace the entire selected text
+        simulateTyping(activeElement, textToReplace, newText);
       }
     } else if (activeElement.isContentEditable) {
-      // Replace on a per-text-node basis to preserve markup
-      try {
-        const sel = window.getSelection();
-        const hadSel = sel && sel.rangeCount > 0;
-        let caretOffset = null;
-        if (hadSel) {
-          const range = sel.getRangeAt(0).cloneRange();
-          caretOffset = getCharacterOffsetWithin(activeElement, range);
+      // For contentEditable, get selection or entire text
+      const sel = window.getSelection();
+      let textToReplace;
+      let range;
+      
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        // User has selected text
+        range = sel.getRangeAt(0);
+        textToReplace = range.toString();
+      } else {
+        // No selection, use entire content
+        textToReplace = activeElement.innerText || activeElement.textContent || '';
+        // Select all
+        range = document.createRange();
+        range.selectNodeContents(activeElement);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      
+      console.log('[Content Script] Original text (contentEditable):', textToReplace);
+      
+      // Apply all replacements
+      let newText = textToReplace;
+      Object.keys(settings.replacements).forEach(k => {
+        const escaped = escapeRegExp(k);
+        const re = new RegExp('\\b' + escaped + '\\b', 'gi');
+        newText = newText.replace(re, settings.replacements[k]);
+      });
+      
+      console.log('[Content Script] New text (contentEditable):', newText);
+      
+      if (newText !== textToReplace) {
+        // Use keyboard simulation
+        activeElement.focus();
+        
+        // Delete selected text
+        for (let i = 0; i < textToReplace.length; i++) {
+          const keydownEvent = new KeyboardEvent('keydown', {
+            key: 'Backspace',
+            code: 'Backspace',
+            keyCode: 8,
+            which: 8,
+            bubbles: true,
+            cancelable: true,
+            composed: true
+          });
+          activeElement.dispatchEvent(keydownEvent);
+          document.execCommand('delete', false, null);
+          
+          const inputEvent = new InputEvent('input', {
+            inputType: 'deleteContentBackward',
+            bubbles: true,
+            cancelable: false,
+            composed: true
+          });
+          activeElement.dispatchEvent(inputEvent);
         }
-
-        let madeChange = false;
-        // Iterate through replacement keys and apply them by selecting ranges and using execCommand
-        for (const k of Object.keys(settings.replacements)) {
-          const escaped = escapeRegExp(k);
-          const re = new RegExp('\\b' + escaped + '\\b', 'gi');
-
-          // Re-scan text nodes each time because execCommand may modify the DOM
-          let nodes = getTextNodes(activeElement);
-          let found = true;
-          while (found) {
-            found = false;
-            for (const node of nodes) {
-              if (!node.nodeValue) continue;
-              const m = re.exec(node.nodeValue);
-              if (m) {
-                found = true;
-                madeChange = true;
-                const matchIndex = m.index;
-                const matchLen = m[0].length;
-                // Build range for this match
-                const range = document.createRange();
-                range.setStart(node, matchIndex);
-                range.setEnd(node, matchIndex + matchLen);
-                try {
-                  const sel = window.getSelection();
-                  sel.removeAllRanges();
-                  sel.addRange(range);
-                  activeElement.focus();
-                  document.execCommand('insertText', false, settings.replacements[k]);
-                } catch (err) {
-                  console.error('applyReplacementsToActiveElement execCommand failed', err);
-                  // Fallback: perform direct node replacement
-                  node.nodeValue = node.nodeValue.replace(re, settings.replacements[k]);
-                }
-                break; // restart scanning for this replacement key
-              }
-            }
-            if (found) {
-              nodes = getTextNodes(activeElement);
-            }
+        
+        // Type new text
+        setTimeout(() => {
+          for (let i = 0; i < newText.length; i++) {
+            const char = newText[i];
+            
+            const keydownEvent = new KeyboardEvent('keydown', {
+              key: char,
+              code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+              keyCode: char.charCodeAt(0),
+              which: char.charCodeAt(0),
+              bubbles: true,
+              cancelable: true,
+              composed: true
+            });
+            activeElement.dispatchEvent(keydownEvent);
+            document.execCommand('insertText', false, char);
+            
+            const inputEvent = new InputEvent('input', {
+              data: char,
+              inputType: 'insertText',
+              bubbles: true,
+              cancelable: false,
+              composed: true
+            });
+            activeElement.dispatchEvent(inputEvent);
           }
-        }
-
-        if (madeChange && hadSel && caretOffset !== null) {
-          // Try to place caret back near previous offset
-          setCaretPosition(activeElement, caretOffset);
-        }
-      } catch (err) {
-        console.error('applyReplacementsToActiveElement (contentEditable) failed', err);
+        }, 10);
       }
     }
   }
@@ -951,15 +1066,43 @@
   function applyFormatting() {
     if (!activeElement) return;
     
-    let text = activeElement.value || activeElement.innerText;
+    console.log('[Content Script] applyFormatting called');
+    
+    let text, hasSelection, sel, range;
+    
+    if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+      sel = getInputSelection(activeElement);
+      hasSelection = sel.start !== sel.end;
+      text = hasSelection ? 
+        activeElement.value.substring(sel.start, sel.end) : 
+        activeElement.value;
+    } else if (activeElement.isContentEditable) {
+      sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        hasSelection = true;
+        range = sel.getRangeAt(0);
+        text = range.toString();
+      } else {
+        hasSelection = false;
+        text = activeElement.innerText || activeElement.textContent || '';
+        // Select all
+        range = document.createRange();
+        range.selectNodeContents(activeElement);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else {
+      return;
+    }
+    
+    console.log('[Content Script] Original text for formatting:', text);
+    
     let newText = text;
 
     // Step 1: Remove specific words/phrases from formattingRemovedWords list
     if (settings.formattingRemovedWords && Array.isArray(settings.formattingRemovedWords)) {
       settings.formattingRemovedWords.forEach(word => {
-        // Escape special regex characters and replace all exact occurrences
         const escapedWord = escapeRegExp(word);
-        // Use global flag to replace all occurrences
         const regex = new RegExp(escapedWord, 'g');
         newText = newText.replace(regex, '');
       });
@@ -968,46 +1111,339 @@
     // Step 2: Process text inside brackets [...]
     // Remove leading/trailing commas and periods, convert to lowercase
     newText = newText.replace(/\[([^\]]+)\]/g, (match, content) => {
-      // Remove leading/trailing commas and periods from content
       let cleaned = content.replace(/^[,.\s]+|[,.\s]+$/g, '');
-      // Convert to lowercase
       cleaned = cleaned.toLowerCase();
       return '[' + cleaned + ']';
     });
 
     // Step 3: Ensure single space after punctuation
-    if (settings.formatting.spaceAfterPunctuation) {
-      // Remove any spaces after punctuation first, then add exactly one space
-      // Match punctuation followed by any amount of spaces (or no space) before a non-space character
+    if (settings.formatting && settings.formatting.spaceAfterPunctuation) {
       newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
     }
 
     // Step 4: Remove double spaces
-    if (settings.formatting.removeDoubleSpaces) {
+    if (settings.formatting && settings.formatting.removeDoubleSpaces) {
       newText = newText.replace(/ +/g, ' ');
     }
 
     // Step 5: Auto-capitalize sentences
-    if (settings.formatting.autoCapitalize) {
-      // Capitalize start of sentences
+    if (settings.formatting && settings.formatting.autoCapitalize) {
       newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
     }
 
-    // Smart quotes (optional, can be placed anywhere)
-    if (settings.formatting.smartQuotes) {
-      newText = newText.replace(/"/g, '\u201C').replace(/'/g, '\u2019'); // simplified
+    // Smart quotes (optional)
+    if (settings.formatting && settings.formatting.smartQuotes) {
+      newText = newText.replace(/"/g, '\u201C').replace(/'/g, '\u2019');
     }
 
     // Final cleanup: trim whitespace
     newText = newText.trim();
 
-    // Apply changes
+    console.log('[Content Script] Formatted text:', newText);
+
+    // Apply changes using keyboard simulation
     if (newText !== text) {
-      if (activeElement.value !== undefined) {
-        activeElement.value = newText;
-        activeElement.dispatchEvent(new Event('input', { bubbles: true }));
+      if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        // Select the text to replace if not already selected
+        if (!hasSelection) {
+          activeElement.selectionStart = 0;
+          activeElement.selectionEnd = activeElement.value.length;
+        }
+        
+        // Use keyboard simulation
+        simulateTyping(activeElement, text, newText);
+      } else if (activeElement.isContentEditable) {
+        // Selection already made above, use keyboard simulation
+        activeElement.focus();
+        
+        // Delete selected text
+        for (let i = 0; i < text.length; i++) {
+          const keydownEvent = new KeyboardEvent('keydown', {
+            key: 'Backspace',
+            code: 'Backspace',
+            keyCode: 8,
+            which: 8,
+            bubbles: true,
+            cancelable: true,
+            composed: true
+          });
+          activeElement.dispatchEvent(keydownEvent);
+          document.execCommand('delete', false, null);
+          
+          const inputEvent = new InputEvent('input', {
+            inputType: 'deleteContentBackward',
+            bubbles: true,
+            cancelable: false,
+            composed: true
+          });
+          activeElement.dispatchEvent(inputEvent);
+        }
+        
+        // Type new text
+        setTimeout(() => {
+          for (let i = 0; i < newText.length; i++) {
+            const char = newText[i];
+            
+            const keydownEvent = new KeyboardEvent('keydown', {
+              key: char,
+              code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+              keyCode: char.charCodeAt(0),
+              which: char.charCodeAt(0),
+              bubbles: true,
+              cancelable: true,
+              composed: true
+            });
+            activeElement.dispatchEvent(keydownEvent);
+            document.execCommand('insertText', false, char);
+            
+            const inputEvent = new InputEvent('input', {
+              data: char,
+              inputType: 'insertText',
+              bubbles: true,
+              cancelable: false,
+              composed: true
+            });
+            activeElement.dispatchEvent(inputEvent);
+          }
+          console.log('[Content Script] Formatting complete');
+        }, 10);
+      }
+    }
+  }
+
+  // --- Alt+A: Apply All Transformations (Replacements + Formatting) ---
+  
+  function applyAllTransformations() {
+    if (!activeElement) return;
+    
+    console.log('[Content Script] applyAllTransformations called (Alt+A)');
+    
+    let text, hasSelection, sel, range;
+    
+    if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+      sel = getInputSelection(activeElement);
+      hasSelection = sel.start !== sel.end;
+      text = hasSelection ? 
+        activeElement.value.substring(sel.start, sel.end) : 
+        activeElement.value;
+    } else if (activeElement.isContentEditable) {
+      sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        hasSelection = true;
+        range = sel.getRangeAt(0);
+        text = range.toString();
       } else {
-        activeElement.innerText = newText;
+        hasSelection = false;
+        text = activeElement.innerText || activeElement.textContent || '';
+        range = document.createRange();
+        range.selectNodeContents(activeElement);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else {
+      return;
+    }
+    
+    let newText = text;
+
+    // Step 1: Apply replacements (Alt+R functionality)
+    if (settings.replacements) {
+      Object.keys(settings.replacements).forEach(k => {
+        const escaped = escapeRegExp(k);
+        const re = new RegExp('\\b' + escaped + '\\b', 'gi');
+        newText = newText.replace(re, settings.replacements[k]);
+      });
+    }
+
+    // Step 2: Convert word numbers to digits (Alt+N functionality)
+    if (settings.formatting && settings.formatting.convertWordNumbers) {
+      const wordToNumber = {
+        'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+        'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+        'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+        'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+        'eighteen': '18', 'nineteen': '19', 'twenty': '20', 'thirty': '30',
+        'forty': '40', 'fifty': '50', 'sixty': '60', 'seventy': '70',
+        'eighty': '80', 'ninety': '90', 'hundred': '100', 'thousand': '1000'
+      };
+      
+      Object.keys(wordToNumber).forEach(word => {
+        const regex = new RegExp('\\b' + word + '\\b', 'gi');
+        newText = newText.replace(regex, wordToNumber[word]);
+      });
+    }
+
+    // Step 3: Remove specific words/phrases from formattingRemovedWords list (Alt+F functionality)
+    if (settings.formattingRemovedWords && Array.isArray(settings.formattingRemovedWords)) {
+      settings.formattingRemovedWords.forEach(word => {
+        const escapedWord = escapeRegExp(word);
+        const regex = new RegExp(escapedWord, 'g');
+        newText = newText.replace(regex, '');
+      });
+    }
+
+    // Step 4: Process text inside brackets [...] (Alt+F functionality)
+    newText = newText.replace(/\[([^\]]+)\]/g, (match, content) => {
+      let cleaned = content.replace(/^[,.\s]+|[,.\s]+$/g, '');
+      cleaned = cleaned.toLowerCase();
+      return '[' + cleaned + ']';
+    });
+
+    // Step 5: Ensure single space after punctuation (Alt+F functionality)
+    if (settings.formatting && settings.formatting.spaceAfterPunctuation) {
+      newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
+    }
+
+    // Step 6: Remove double spaces (Alt+F functionality)
+    if (settings.formatting && settings.formatting.removeDoubleSpaces) {
+      newText = newText.replace(/ +/g, ' ');
+    }
+
+    // Step 7: Auto-capitalize sentences (Alt+F functionality)
+    if (settings.formatting && settings.formatting.autoCapitalize) {
+      newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
+    }
+
+    // Step 8: Smart quotes (Alt+F functionality)
+    if (settings.formatting && settings.formatting.smartQuotes) {
+      newText = newText.replace(/"/g, '\u201C').replace(/'/g, '\u2019');
+    }
+
+    newText = newText.trim();
+
+    if (newText !== text) {
+      if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        if (!hasSelection) {
+          activeElement.selectionStart = 0;
+          activeElement.selectionEnd = activeElement.value.length;
+        }
+        simulateTyping(activeElement, text, newText);
+      } else if (activeElement.isContentEditable) {
+        activeElement.focus();
+        for (let i = 0; i < text.length; i++) {
+          const keydownEvent = new KeyboardEvent('keydown', {
+            key: 'Backspace', code: 'Backspace', keyCode: 8, which: 8,
+            bubbles: true, cancelable: true, composed: true
+          });
+          activeElement.dispatchEvent(keydownEvent);
+          document.execCommand('delete', false, null);
+          const inputEvent = new InputEvent('input', {
+            inputType: 'deleteContentBackward', bubbles: true, cancelable: false, composed: true
+          });
+          activeElement.dispatchEvent(inputEvent);
+        }
+        setTimeout(() => {
+          for (let i = 0; i < newText.length; i++) {
+            const char = newText[i];
+            const keydownEvent = new KeyboardEvent('keydown', {
+              key: char, code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+              keyCode: char.charCodeAt(0), which: char.charCodeAt(0),
+              bubbles: true, cancelable: true, composed: true
+            });
+            activeElement.dispatchEvent(keydownEvent);
+            document.execCommand('insertText', false, char);
+            const inputEvent = new InputEvent('input', {
+              data: char, inputType: 'insertText', bubbles: true, cancelable: false, composed: true
+            });
+            activeElement.dispatchEvent(inputEvent);
+          }
+        }, 10);
+      }
+    }
+  }
+
+  function convertWordsToNumbers() {
+    if (!activeElement) return;
+    if (!settings.formatting || !settings.formatting.convertWordNumbers) return;
+    
+    console.log('[Content Script] convertWordsToNumbers called (Alt+N)');
+    
+    let text, hasSelection, sel, range;
+    
+    if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+      sel = getInputSelection(activeElement);
+      hasSelection = sel.start !== sel.end;
+      text = hasSelection ? 
+        activeElement.value.substring(sel.start, sel.end) : 
+        activeElement.value;
+    } else if (activeElement.isContentEditable) {
+      sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        hasSelection = true;
+        range = sel.getRangeAt(0);
+        text = range.toString();
+      } else {
+        hasSelection = false;
+        text = activeElement.innerText || activeElement.textContent || '';
+        range = document.createRange();
+        range.selectNodeContents(activeElement);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else {
+      return;
+    }
+    
+    console.log('[Content Script] Original text for number conversion:', text);
+    
+    const wordToNumber = {
+      'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+      'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+      'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+      'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+      'eighteen': '18', 'nineteen': '19', 'twenty': '20', 'thirty': '30',
+      'forty': '40', 'fifty': '50', 'sixty': '60', 'seventy': '70',
+      'eighty': '80', 'ninety': '90', 'hundred': '100', 'thousand': '1000'
+    };
+    
+    // Replace all word numbers with their digit equivalents using word boundaries
+    let newText = text;
+    Object.keys(wordToNumber).forEach(word => {
+      // Use word boundaries (\b) to match whole words only
+      const regex = new RegExp('\\b' + word + '\\b', 'gi');
+      newText = newText.replace(regex, wordToNumber[word]);
+    });
+    
+    console.log('[Content Script] Converted text:', newText);
+
+    if (newText !== text) {
+      if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        if (!hasSelection) {
+          activeElement.selectionStart = 0;
+          activeElement.selectionEnd = activeElement.value.length;
+        }
+        simulateTyping(activeElement, text, newText);
+      } else if (activeElement.isContentEditable) {
+        activeElement.focus();
+        for (let i = 0; i < text.length; i++) {
+          const keydownEvent = new KeyboardEvent('keydown', {
+            key: 'Backspace', code: 'Backspace', keyCode: 8, which: 8,
+            bubbles: true, cancelable: true, composed: true
+          });
+          activeElement.dispatchEvent(keydownEvent);
+          document.execCommand('delete', false, null);
+          const inputEvent = new InputEvent('input', {
+            inputType: 'deleteContentBackward', bubbles: true, cancelable: false, composed: true
+          });
+          activeElement.dispatchEvent(inputEvent);
+        }
+        setTimeout(() => {
+          for (let i = 0; i < newText.length; i++) {
+            const char = newText[i];
+            const keydownEvent = new KeyboardEvent('keydown', {
+              key: char, code: char === ' ' ? 'Space' : 'Key' + char.toUpperCase(),
+              keyCode: char.charCodeAt(0), which: char.charCodeAt(0),
+              bubbles: true, cancelable: true, composed: true
+            });
+            activeElement.dispatchEvent(keydownEvent);
+            document.execCommand('insertText', false, char);
+            const inputEvent = new InputEvent('input', {
+              data: char, inputType: 'insertText', bubbles: true, cancelable: false, composed: true
+            });
+            activeElement.dispatchEvent(inputEvent);
+          }
+          console.log('[Content Script] Number conversion typing complete');
+        }, 10);
       }
     }
   }

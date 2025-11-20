@@ -45,8 +45,10 @@
     <ul style="margin: 5px 0; padding-left: 20px;">
       <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+R</kbd> - Apply bulk replacements to selected text</li>
       <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+F</kbd> - Format selected text (or entire field)</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+N</kbd> - Convert word numbers to digits</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+A</kbd> - Apply ALL (Alt+R + Alt+F + Alt+N combined)</li>
       <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+P</kbd> - Show/hide floating word picker</li>
-      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Enter</kbd> or <kdb>Tab</kdb> - Accept autocomplete suggestion</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Enter</kbd> or <kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Tab</kbd> - Accept autocomplete suggestion</li>
     </ul>
     <p style="margin: 10px 0 0 0; font-size: 0.9rem; opacity: 0.9;">&#128161; Tip: Configure your preferences below and click "Save Settings" at the bottom.</p>
   </div>
@@ -134,8 +136,8 @@
     <label><input type="checkbox" id="fmt-punctuation"> Single Space After Punctuation</label>
     <label><input type="checkbox" id="fmt-quote"> Smart Quotes</label>
     
-    <h3 style="margin-top: 20px;">Words to Remove on Alt+F</h3>
-    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+    <label><input type="checkbox" id="fmt-remove-words"> Enable Word Removal</label>
+    <p style="color: #666; font-size: 0.95rem; margin: 10px 0;">
       These exact phrases will be completely removed when you press <kbd>Alt+F</kbd>. Useful for removing filler words from transcriptions.
     </p>
     <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
@@ -152,6 +154,68 @@
       <input type="text" id="new-formatting-removed" placeholder="Word to remove (e.g. '[inhale]')">
       <button id="add-formatting-removed">Add</button>
     </div>
+    
+    <h3 style="margin-top: 20px;">Number Conversion (Alt+N)</h3>
+    <label><input type="checkbox" id="fmt-convert-numbers"> Enable Word-to-Number Conversion</label>
+    <p style="color: #666; font-size: 0.95rem; margin: 10px 0;">
+      <strong>How it works:</strong> Press <kbd>Alt+N</kbd> to convert ALL number words to digits throughout the text.
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Examples:</strong><br>
+      &bull; Input: "I have one apple, two oranges, and three bananas"<br>
+      &bull; Output: "I have 1 apple, 2 oranges, and 3 bananas"<br>
+      <br>
+      &bull; Input: "Chapter one discusses ten key points"<br>
+      &bull; Output: "Chapter 1 discusses 10 key points"<br>
+      <br>
+      &bull; Input: "twenty-five" (with hyphen)<br>
+      &bull; Output: "20-5" (converts each word separately)<br>
+      <br>
+      <strong>Supported:</strong> zero through nineteen, twenty, thirty, forty, fifty, sixty, seventy, eighty, ninety, hundred, thousand
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Apply All Transformations (Alt+A)</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+      <strong>How it works:</strong> Press <kbd>Alt+A</kbd> to apply ALL transformations at once in a single operation. This is the most powerful shortcut that combines everything!
+    </p>
+    <div style="background: #fff3cd; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #ffc107;">
+      <strong>⚡ What Alt+A Does (in order):</strong><br>
+      <br>
+      <strong>Step 1: Word Replacements (Alt+R)</strong><br>
+      &bull; Fixes all typos and replaces shortcuts with full text<br>
+      <br>
+      <strong>Step 2: Number Conversion (Alt+N)</strong><br>
+      &bull; Converts word numbers to digits (if enabled)<br>
+      <br>
+      <strong>Step 3: Formatting (Alt+F)</strong><br>
+      &bull; Removes unwanted words (if enabled)<br>
+      &bull; Cleans text inside brackets<br>
+      &bull; Adds space after punctuation<br>
+      &bull; Removes double spaces<br>
+      &bull; Capitalizes sentences<br>
+      &bull; Applies smart quotes (if enabled)<br>
+    </div>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Example:</strong><br>
+      <br>
+      <strong>Before:</strong><br>
+      "teh meeting has one hundred attendees[um]dont forget to email them"<br>
+      <br>
+      <strong>After Alt+A:</strong><br>
+      "The meeting has 100 attendees. Don't forget to email them"<br>
+      <br>
+      <em style="color: #666;">✓ Fixed "teh" → "the"</em><br>
+      <em style="color: #666;">✓ Converted "one hundred" → "100"</em><br>
+      <em style="color: #666;">✓ Removed "[um]"</em><br>
+      <em style="color: #666;">✓ Fixed "dont" → "don't"</em><br>
+      <em style="color: #666;">✓ Capitalized first letter</em><br>
+      <em style="color: #666;">✓ Added proper spacing</em>
+    </div>
+    <p style="color: #666; font-size: 0.95rem;">
+      <strong>💡 Tip:</strong> Alt+A respects all your checkbox settings above. Enable/disable features to customize what gets applied!
+    </p>
   </div>
 
   <button id="save-btn" style="width: 100%; font-size: 1.2rem; margin-top: 20px;">Save Settings</button>

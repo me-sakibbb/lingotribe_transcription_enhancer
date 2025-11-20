@@ -146,7 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
           autoCapitalize: $('fmt-caps') ? $('fmt-caps').checked : true,
           removeDoubleSpaces: $('fmt-space') ? $('fmt-space').checked : true,
           spaceAfterPunctuation: $('fmt-punctuation') ? $('fmt-punctuation').checked : true,
-          smartQuotes: $('fmt-quote') ? $('fmt-quote').checked : true
+          smartQuotes: $('fmt-quote') ? $('fmt-quote').checked : true,
+          removeWords: $('fmt-remove-words') ? $('fmt-remove-words').checked : true,
+          convertWordNumbers: $('fmt-convert-numbers') ? $('fmt-convert-numbers').checked : false
         }
       };
       chrome.storage.sync.set(config, () => {
@@ -173,6 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if ($('fmt-space')) $('fmt-space').checked = !!data.formatting.removeDoubleSpaces;
           if ($('fmt-punctuation')) $('fmt-punctuation').checked = !!data.formatting.spaceAfterPunctuation;
           if ($('fmt-quote')) $('fmt-quote').checked = !!data.formatting.smartQuotes;
+          if ($('fmt-remove-words')) $('fmt-remove-words').checked = !!data.formatting.removeWords;
+          if ($('fmt-convert-numbers')) $('fmt-convert-numbers').checked = !!data.formatting.convertWordNumbers;
         }
       } catch (innerErr) {
         console.error('Error initializing options UI', innerErr);

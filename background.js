@@ -23,7 +23,9 @@ const DEFAULT_SETTINGS = {
     autoCapitalize: true,
     smartQuotes: true,
     removeDoubleSpaces: true,
-    spaceAfterPunctuation: true
+    spaceAfterPunctuation: true,
+    removeWords: true,
+    convertWordNumbers: true
   },
   enabled: true
 };
