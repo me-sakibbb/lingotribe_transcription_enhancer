@@ -71,12 +71,71 @@ document.addEventListener('DOMContentLoaded', () => {
   // Expose for use by remove buttons
   window.removeItem = removeItem;
 
+  // Function to render array-based list (for formattingRemovedWords)
+  function renderArrayList(containerId, array) {
+    const container = $(containerId);
+    container.innerHTML = '';
+    if (!array || !Array.isArray(array)) return;
+
+    array.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const itemInput = document.createElement('input');
+      itemInput.type = 'text';
+      itemInput.value = item;
+      itemInput.readOnly = true;
+      itemInput.style.background = '#f4f4f4';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove';
+      removeBtn.textContent = 'X';
+      removeBtn.addEventListener('click', () => removeArrayItem(index));
+
+      row.appendChild(itemInput);
+      row.appendChild(removeBtn);
+
+      container.appendChild(row);
+    });
+  }
+
+  function addFormattingRemovedWord() {
+    const input = $('new-formatting-removed');
+    if (!input) return;
+
+    const word = input.value.trim();
+    if (!word) return;
+
+    chrome.storage.sync.get(null, (data) => {
+      const arr = data.formattingRemovedWords || [];
+      if (!arr.includes(word)) {
+        arr.push(word);
+        chrome.storage.sync.set({ formattingRemovedWords: arr }, () => {
+          input.value = '';
+          renderArrayList('formatting-removed-list', arr);
+        });
+      }
+    });
+  }
+
+  function removeArrayItem(index) {
+    chrome.storage.sync.get(null, (data) => {
+      const arr = data.formattingRemovedWords || [];
+      arr.splice(index, 1);
+      chrome.storage.sync.set({ formattingRemovedWords: arr }, () => {
+        renderArrayList('formatting-removed-list', arr);
+      });
+    });
+  }
+
   // Attach click handlers safely
   const addShortcutBtn = $('add-shortcut');
   const addReplaceBtn = $('add-replace');
+  const addFormattingRemovedBtn = $('add-formatting-removed');
   const saveBtn = $('save-btn');
   if (addShortcutBtn) addShortcutBtn.addEventListener('click', () => addItem('shortcut'));
   if (addReplaceBtn) addReplaceBtn.addEventListener('click', () => addItem('replace'));
+  if (addFormattingRemovedBtn) addFormattingRemovedBtn.addEventListener('click', addFormattingRemovedWord);
 
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
@@ -86,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formatting: {
           autoCapitalize: $('fmt-caps') ? $('fmt-caps').checked : true,
           removeDoubleSpaces: $('fmt-space') ? $('fmt-space').checked : true,
+          spaceAfterPunctuation: $('fmt-punctuation') ? $('fmt-punctuation').checked : true,
           smartQuotes: $('fmt-quote') ? $('fmt-quote').checked : true
         }
       };
@@ -106,10 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if ($('enabled')) $('enabled').checked = !!data.enabled;
         renderList('shortcuts-list', data.shortcuts, 'shortcut');
         renderList('replacements-list', data.replacements, 'replace');
+        renderArrayList('formatting-removed-list', data.formattingRemovedWords);
         if ($('picker-items')) $('picker-items').value = (data.wordPickerItems || []).join('\n');
         if (data.formatting) {
           if ($('fmt-caps')) $('fmt-caps').checked = !!data.formatting.autoCapitalize;
           if ($('fmt-space')) $('fmt-space').checked = !!data.formatting.removeDoubleSpaces;
+          if ($('fmt-punctuation')) $('fmt-punctuation').checked = !!data.formatting.spaceAfterPunctuation;
           if ($('fmt-quote')) $('fmt-quote').checked = !!data.formatting.smartQuotes;
         }
       } catch (innerErr) {

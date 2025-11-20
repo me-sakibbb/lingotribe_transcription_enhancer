@@ -1,43 +1,77 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <style>
-    body { width: 200px; padding: 10px; font-family: sans-serif; }
-    button { width: 100%; padding: 10px; margin-bottom: 5px; cursor: pointer; background: #eee; border: none; border-radius: 4px; }
-    button:hover { background: #ddd; }
-    .primary { background: #3e8e41; color: white; }
-    .primary:hover { background: #2c662e; }
+    body { 
+      width: 220px; 
+      padding: 15px; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+    }
+    h3 {
+      margin: 0 0 15px 0;
+      color: #333;
+      font-size: 16px;
+      text-align: center;
+    }
+    button { 
+      width: 100%; 
+      padding: 12px; 
+      margin-bottom: 8px; 
+      cursor: pointer; 
+      border: none; 
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .primary { 
+      background: #3e8e41; 
+      color: white; 
+    }
+    .primary:hover { 
+      background: #2c662e; 
+    }
+    .secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .secondary:hover {
+      background: #e0e0e0;
+    }
+    .disabled {
+      background: #d32f2f;
+      color: white;
+    }
+    .disabled:hover {
+      background: #9a0007;
+    }
+    .status {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      min-height: 20px;
+    }
   </style>
 </head>
 <body>
-  <h3 style="margin-top:0">Text Enhancer</h3>
-  <button id="toggle" class="primary">Disable</button>
-  <button id="options">Open Settings</button>
+  <h3>Text Enhancer Pro</h3>
+  <button id="toggle" class="primary">Disable Extension</button>
+  <button id="options" class="secondary">Open Settings</button>
+  <div id="status" class="status"></div>
   
-  <script>
-    const toggleBtn = document.getElementById('toggle');
-    
-    chrome.storage.sync.get(['enabled'], (data) => {
-      updateBtn(data.enabled);
-    });
-    
-    toggleBtn.onclick = () => {
-      chrome.storage.sync.get(['enabled'], (data) => {
-        const newState = !data.enabled;
-        chrome.storage.sync.set({ enabled: newState }, () => {
-          updateBtn(newState);
-        });
-      });
-    };
-    
-    document.getElementById('options').onclick = () => {
-      chrome.runtime.openOptionsPage();
-    };
-    
-    function updateBtn(enabled) {
-      toggleBtn.textContent = enabled ? "Disable Extension" : "Enable Extension";
-      toggleBtn.style.background = enabled ? "#3e8e41" : "#d32f2f";
-    }
-  </script>
+  <script src="popup.js"></script>
 </body>
 </html>

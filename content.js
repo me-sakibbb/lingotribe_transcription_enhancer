@@ -81,39 +81,75 @@
         position: fixed;
         bottom: 20px;
         right: 20px;
-        width: 200px;
+        min-width: 300px;
+        max-width: 90vw;
         background: #fff;
         color: #333;
-        border: 1px solid #ccc;
+        border: 2px solid #3e8e41;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         display: flex;
         flex-direction: column;
         pointer-events: auto;
         font-family: sans-serif;
         transition: opacity 0.2s;
+        resize: both;
+        overflow: hidden;
       }
       .picker-header {
-        padding: 10px;
-        background: #f4f4f4;
-        border-bottom: 1px solid #ddd;
-        border-radius: 8px 8px 0 0;
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #3e8e41 0%, #2c662e 100%);
+        color: white;
+        border-radius: 6px 6px 0 0;
         cursor: move;
         font-weight: bold;
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        user-select: none;
+      }
+      .picker-header span:first-child {
+        font-size: 14px;
+      }
+      .picker-header span:last-child {
+        font-size: 24px;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0 5px;
+        border-radius: 3px;
+        transition: background 0.2s;
+      }
+      .picker-header span:last-child:hover {
+        background: rgba(255,255,255,0.2);
       }
       .picker-content {
-        max-height: 250px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
         overflow-y: auto;
+        max-height: 300px;
+        align-items: flex-start;
       }
       .picker-item {
-        padding: 8px 10px;
+        padding: 8px 16px;
         cursor: pointer;
-        border-bottom: 1px solid #eee;
+        background: #f0f9ff;
+        border: 1px solid #3e8e41;
+        border-radius: 20px;
+        transition: all 0.2s;
+        white-space: nowrap;
+        font-size: 13px;
+        user-select: none;
       }
       .picker-item:hover {
-        background: #f0f9ff;
+        background: #3e8e41;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(62, 142, 65, 0.3);
+      }
+      .picker-item:active {
+        transform: translateY(0);
       }
       .hidden { display: none !important; }
     `;
@@ -129,8 +165,8 @@
     
     picker.innerHTML = `
       <div class="picker-header">
-        <span>Picker</span>
-        <span style="cursor:pointer" id="close-picker">×</span>
+        <span>📝 Quick Insert</span>
+        <span id="close-picker">×</span>
       </div>
       <div class="picker-content" id="picker-list"></div>
     `;
@@ -324,6 +360,24 @@
       return;
     }
 
+    // Hotkey for Word Picker: Alt+P
+    if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+      e.preventDefault();
+      console.log('[Content Script] Alt+P pressed, wordPicker exists:', !!wordPicker);
+      if (!wordPicker) {
+        console.log('[Content Script] Creating UI for word picker...');
+        createUI();
+      }
+      if (wordPicker) {
+        const wasHidden = wordPicker.classList.contains('hidden');
+        wordPicker.classList.toggle('hidden');
+        console.log('[Content Script] Word picker toggled:', wasHidden ? 'showing' : 'hiding');
+      } else {
+        console.log('[Content Script] ERROR: wordPicker still null after createUI');
+      }
+      return;
+    }
+
     // Autocomplete Navigation
     if (autocompleteOverlay && autocompleteOverlay.style.display === 'block') {
       if (e.key === 'ArrowDown') {
@@ -385,7 +439,9 @@
       if (/\s|[.?!,;:\)\]]/.test(charBefore)) {
         console.log('[Content Script] Trigger character detected');
         // We consider the user finished a word — get the last word and attempt replacement
-        const lastWordMatch = beforeCursor.trim().match(/(\S+)$/);
+        // Get the text WITHOUT the trigger character to find the word
+        const textWithoutTrigger = beforeCursor.slice(0, -1);
+        const lastWordMatch = textWithoutTrigger.trim().match(/(\S+)$/);
         console.log('[Content Script] Last word match:', lastWordMatch);
         if (lastWordMatch) {
           const finishedWord = lastWordMatch[0];
@@ -393,10 +449,12 @@
           console.log('[Content Script] Checking replacements for:', finishedWord, 'found:', replacement);
           if (replacement !== undefined) {
             console.log('[Content Script] Auto-replacement triggered for', finishedWord, '->', replacement);
-            replaceLastWord(finishedWord, replacement);
+            // Delete the word AND the trigger character, then insert replacement + space
+            replaceLastWord(finishedWord + charBefore, replacement + charBefore);
           } else if (settings.removedWords && settings.removedWords.includes(finishedWord.toLowerCase())) {
             console.log('[Content Script] Auto-remove triggered for', finishedWord);
-            replaceLastWord(finishedWord, "");
+            // Delete the word AND the trigger character, then insert just the trigger
+            replaceLastWord(finishedWord + charBefore, charBefore);
           }
         }
       }
@@ -896,21 +954,58 @@
     let text = activeElement.value || activeElement.innerText;
     let newText = text;
 
+    // Step 1: Remove specific words/phrases from formattingRemovedWords list
+    if (settings.formattingRemovedWords && Array.isArray(settings.formattingRemovedWords)) {
+      settings.formattingRemovedWords.forEach(word => {
+        // Escape special regex characters and replace all exact occurrences
+        const escapedWord = escapeRegExp(word);
+        // Use global flag to replace all occurrences
+        const regex = new RegExp(escapedWord, 'g');
+        newText = newText.replace(regex, '');
+      });
+    }
+
+    // Step 2: Process text inside brackets [...]
+    // Remove leading/trailing commas and periods, convert to lowercase
+    newText = newText.replace(/\[([^\]]+)\]/g, (match, content) => {
+      // Remove leading/trailing commas and periods from content
+      let cleaned = content.replace(/^[,.\s]+|[,.\s]+$/g, '');
+      // Convert to lowercase
+      cleaned = cleaned.toLowerCase();
+      return '[' + cleaned + ']';
+    });
+
+    // Step 3: Ensure single space after punctuation
+    if (settings.formatting.spaceAfterPunctuation) {
+      // Remove any spaces after punctuation first, then add exactly one space
+      // Match punctuation followed by any amount of spaces (or no space) before a non-space character
+      newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
+    }
+
+    // Step 4: Remove double spaces
+    if (settings.formatting.removeDoubleSpaces) {
+      newText = newText.replace(/ +/g, ' ');
+    }
+
+    // Step 5: Auto-capitalize sentences
     if (settings.formatting.autoCapitalize) {
       // Capitalize start of sentences
       newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
     }
-    if (settings.formatting.removeDoubleSpaces) {
-      newText = newText.replace(/ +/g, ' ');
-    }
+
+    // Smart quotes (optional, can be placed anywhere)
     if (settings.formatting.smartQuotes) {
-      newText = newText.replace(/"/g, '”').replace(/'/g, '’'); // simplified
+      newText = newText.replace(/"/g, '\u201C').replace(/'/g, '\u2019'); // simplified
     }
+
+    // Final cleanup: trim whitespace
+    newText = newText.trim();
 
     // Apply changes
     if (newText !== text) {
       if (activeElement.value !== undefined) {
         activeElement.value = newText;
+        activeElement.dispatchEvent(new Event('input', { bubbles: true }));
       } else {
         activeElement.innerText = newText;
       }

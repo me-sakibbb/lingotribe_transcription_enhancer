@@ -17,11 +17,13 @@ const DEFAULT_SETTINGS = {
     "cant": "can't"
   },
   removedWords: ["literally", "basically"],
+  formattingRemovedWords: ["[inhale]", "[exhale]", "[um]", "[uh]", "[hmm]"],
   wordPickerItems: ["Sincerely,", "Best regards,", "Thank you,"],
   formatting: {
     autoCapitalize: true,
     smartQuotes: true,
-    removeDoubleSpaces: true
+    removeDoubleSpaces: true,
+    spaceAfterPunctuation: true
   },
   enabled: true
 };
