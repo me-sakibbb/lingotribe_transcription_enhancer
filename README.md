@@ -139,7 +139,9 @@ Contributions are welcome! Feel free to:
 
 ## 📝 License
 
-This project is open source and available for personal and commercial use.
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2025 me-sakibbb
 
 ## 🙏 Acknowledgments
 
