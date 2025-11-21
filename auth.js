@@ -1,5 +1,5 @@
 // auth.js
-// Authentication and Authorization Module (Web OAuth only - works on Chrome and Edge)
+// Authentication and Authorization Module (Web OAuth + Firebase)
 
 class AuthManager {
     constructor() {
@@ -100,12 +100,9 @@ class AuthManager {
         try {
             console.log('[Auth] Verifying user:', email);
 
-            // OPTION 1: Check against hardcoded list (for testing)
+            // Fetch authorized emails from Firebase
             const authorizedEmails = await this.getAuthorizedEmails();
             const isAuthorized = authorizedEmails.includes(email.toLowerCase());
-
-            // OPTION 2: Check against Firebase/backend (uncomment when ready)
-            // const isAuthorized = await this.checkWithBackend(email);
 
             console.log('[Auth] User authorized:', isAuthorized);
             return isAuthorized;
@@ -117,49 +114,33 @@ class AuthManager {
 
     /**
      * Get list of authorized emails
-     * You can modify this to fetch from a backend/Firebase
+     * Fetches from Firebase Firestore
      */
     async getAuthorizedEmails() {
-        // OPTION 1: Hardcoded list (simple, but needs extension update to change)
-        return [
-            'your-email@gmail.com',
-            'authorized-user@example.com',
-            'sakibulhasan159@gmail.com'
-            // Add more authorized emails here
-        ];
-
-        // OPTION 2: Fetch from your backend (recommended)
-        // try {
-        //   const response = await fetch('https://your-backend.com/api/authorized-users');
-        //   const data = await response.json();
-        //   return data.emails || [];
-        // } catch (error) {
-        //   console.error('[Auth] Failed to fetch authorized emails:', error);
-        //   return [];
-        // }
-
-        // OPTION 3: Fetch from Firebase (best for real-time updates)
-        // See implementation in AUTH_SETUP.md
-    }
-
-    /**
-     * Check authorization with backend API
-     */
-    async checkWithBackend(email) {
         try {
-            const response = await fetch('https://your-backend.com/api/check-authorization', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email })
-            });
+            // Fetch from Firebase
+            if (typeof firebaseHelper !== 'undefined') {
+                console.log('[Auth] Fetching authorized emails from Firebase...');
+                const emails = await firebaseHelper.getAuthorizedEmails();
 
-            const data = await response.json();
-            return data.authorized === true;
+                if (emails && emails.length > 0) {
+                    console.log('[Auth] Loaded', emails.length, 'authorized emails from Firebase');
+                    return emails.map(email => email.toLowerCase());
+                }
+            }
+
+            // Fallback to hardcoded list if Firebase fails
+            console.warn('[Auth] Firebase unavailable, using fallback list');
+            return [
+                'sakibulhasan159@gmail.com'
+                // Fallback list - only used if Firebase is unavailable
+            ];
         } catch (error) {
-            console.error('[Auth] Backend check failed:', error);
-            return false;
+            console.error('[Auth] Error fetching authorized emails:', error);
+            // Fallback to hardcoded list on error
+            return [
+                'sakibulhasan159@gmail.com'
+            ];
         }
     }
 

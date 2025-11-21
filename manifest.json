@@ -37,6 +37,7 @@
         "*://*.lingotribe.world/*"
       ],
       "js": [
+        "firebase-config.js",
         "auth.js",
         "content.js"
       ],
