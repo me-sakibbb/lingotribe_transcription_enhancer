@@ -94,102 +94,77 @@ console.log(
       }
       .word-picker {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-        color: #fff;
-        border-top: 3px solid #444;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+        bottom: 20px;
+        right: 20px;
+        min-width: 300px;
+        max-width: 90vw;
+        background: #fff;
+        color: #333;
+        border: 2px solid #3e8e41;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         pointer-events: auto;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        transition: all 0.3s ease;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 8px 12px;
-        gap: 6px;
-        align-items: center;
+        font-family: sans-serif;
+        transition: opacity 0.2s;
+        resize: both;
+        overflow: hidden;
       }
       .picker-header {
-        display: none;
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #3e8e41 0%, #2c662e 100%);
+        color: white;
+        border-radius: 6px 6px 0 0;
+        cursor: move;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+      }
+      .picker-header span:first-child {
+        font-size: 14px;
+      }
+      .picker-header span:last-child {
+        font-size: 24px;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0 5px;
+        border-radius: 3px;
+        transition: background 0.2s;
+      }
+      .picker-header span:last-child:hover {
+        background: rgba(255,255,255,0.2);
       }
       .picker-content {
         display: flex;
-        flex-direction: row;
-        gap: 6px;
-        padding: 0;
-        overflow: visible;
-        max-height: none;
-        align-items: center;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+        overflow-y: auto;
+        max-height: 300px;
+        align-items: flex-start;
       }
       .picker-item {
-        position: relative;
-        padding: 10px 16px;
-        padding-top: 24px;
+        padding: 8px 16px;
         cursor: pointer;
-        background: #ffffff;
-        color: #000;
-        border: 2px solid #555;
-        border-radius: 6px;
+        background: #f0f9ff;
+        border: 1px solid #3e8e41;
+        border-radius: 20px;
         transition: all 0.2s;
         white-space: nowrap;
         font-size: 13px;
-        font-weight: 500;
         user-select: none;
-        min-width: 60px;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      }
-      .picker-item-number {
-        position: absolute;
-        top: 3px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #000;
-        color: #fff;
-        font-size: 10px;
-        font-weight: bold;
-        padding: 2px 6px;
-        border-radius: 3px;
-        min-width: 20px;
-        text-align: center;
       }
       .picker-item:hover {
-        background: #f0f0f0;
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-        border-color: #777;
+        background: #3e8e41;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(62, 142, 65, 0.3);
       }
       .picker-item:active {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      }
-      .picker-close {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 28px;
-        height: 28px;
-        background: #444;
-        color: #fff;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        pointer-events: auto;
-      }
-      .picker-close:hover {
-        background: #666;
-        transform: translateY(-50%) scale(1.1);
+        transform: translateY(0);
       }
       .hidden { display: none !important; }
     `;
@@ -204,8 +179,11 @@ console.log(
     picker.className = 'word-picker hidden';
 
     picker.innerHTML = `
+      <div class="picker-header">
+        <span>📝 Quick Insert</span>
+        <span id="close-picker">×</span>
+      </div>
       <div class="picker-content" id="picker-list"></div>
-      <button class="picker-close" id="close-picker">×</button>
     `;
 
     wordPicker = picker;
@@ -215,27 +193,51 @@ console.log(
     shadow.appendChild(picker);
     document.body.appendChild(host);
 
+    // Drag Logic for Picker
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    const header = picker.querySelector('.picker-header');
+    header.addEventListener('mousedown', dragStart);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('mousemove', drag);
+
+    function dragStart(e) {
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
+      if (e.target === header || header.contains(e.target)) {
+        isDragging = true;
+      }
+    }
+    function dragEnd(e) {
+      initialX = currentX;
+      initialY = currentY;
+      isDragging = false;
+    }
+    function drag(e) {
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        xOffset = currentX;
+        yOffset = currentY;
+        picker.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+    }
+
     // Populate Picker
     const renderPicker = () => {
       const list = picker.querySelector('#picker-list');
       list.innerHTML = '';
-      (settings.wordPickerItems || []).forEach((text, index) => {
+      (settings.wordPickerItems || []).forEach(text => {
         const item = document.createElement('div');
         item.className = 'picker-item';
-
-        // Create number badge
-        const numberBadge = document.createElement('div');
-        numberBadge.className = 'picker-item-number';
-        // Display 1-9 for first 9 items
-        if (index < 9) {
-          numberBadge.textContent = `${index + 1}`;
-        } else {
-          // For items beyond 9, you could use letters or just numbers
-          numberBadge.textContent = `${index + 1}`;
-        }
-
-        item.appendChild(numberBadge);
-        item.appendChild(document.createTextNode(text));
+        item.textContent = text;
         item.onclick = () => insertTextAtCursor(text);
         list.appendChild(item);
       });
@@ -307,70 +309,78 @@ console.log(
     console.log('[Content Script] insertTextAtCursor complete');
   };
 
-  const replaceLastWord = async (original, replacement) => {
+  const replaceLastWord = async (original, replacement, cursorIndex = null) => {
     if (!activeElement) return;
 
-    console.log('[Content Script] replaceLastWord called:', original, '->', replacement);
+    console.log('[Content Script] replaceLastWord called:', original, '->', replacement, 'at cursor:', cursorIndex);
 
     const isInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
     if (!isInput && !activeElement.isContentEditable) return;
 
     let currentText = '';
-    let cursorPos = null;
-
     if (isInput) {
       currentText = activeElement.value;
-      cursorPos = activeElement.selectionStart;
     } else {
       currentText = activeElement.innerText || activeElement.textContent || '';
-      // For contentEditable, calculate cursor position
-      try {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const range = sel.getRangeAt(0);
-          cursorPos = getCharacterOffsetWithin(activeElement, range.startContainer, range.startOffset);
-        }
-      } catch (err) {
-        console.log('[Content Script] Could not get cursor position:', err);
+    }
+
+    // If cursorIndex is not provided, try to guess or default to end (legacy behavior, though risky)
+    // But ideally we should always have it.
+    let searchEndIndex = currentText.length;
+    if (cursorIndex !== null) {
+      searchEndIndex = cursorIndex;
+    } else {
+      // Try to get current cursor position if not passed
+      const coords = getCaretCoordinates(); // This returns x,y not index. 
+      // We need index.
+      if (isInput) {
+        searchEndIndex = activeElement.selectionStart;
+      } else {
+        // For contentEditable, it's hard to get absolute index without range.
+        // We'll fallback to lastIndexOf entire string if not provided, but warn.
+        console.warn('[Content Script] replaceLastWord called without cursorIndex, falling back to global search');
       }
     }
 
-    if (cursorPos === null) {
-      console.log('[Content Script] Cannot replace without cursor position');
-      return;
-    }
-
-    // Find the word immediately before the cursor position
-    const textBeforeCursor = currentText.substring(0, cursorPos);
+    // Find the last occurrence of the original word BEFORE the cursor
+    const textBeforeCursor = currentText.slice(0, searchEndIndex);
     const lastIndex = textBeforeCursor.lastIndexOf(original);
 
-    // Verify this is the word right before cursor (not part of another word)
-    if (lastIndex === -1 || lastIndex + original.length !== cursorPos) {
-      console.log('[Content Script] Word not found immediately before cursor');
+    if (lastIndex === -1) {
+      console.log('[Content Script] Word not found before cursor');
       return;
     }
 
     // Calculate new text
-    const newText = currentText.substring(0, lastIndex) + replacement + currentText.substring(lastIndex + original.length);
-    const newCursorPos = lastIndex + replacement.length;
+    // We replace the instance found at lastIndex
+    // const newText = currentText.substring(0, lastIndex) + replacement + currentText.substring(lastIndex + original.length);
 
-    console.log('[Content Script] Replacing at position', lastIndex, 'new cursor will be at', newCursorPos);
-
-    // Select the word to be replaced and paste
+    // Select the word to be replaced
     if (isInput) {
-      activeElement.value = newText;
-      activeElement.selectionStart = activeElement.selectionEnd = newCursorPos;
+      // Use setRangeText for reliable replacement without selecting all
+      try {
+        activeElement.setRangeText(replacement, lastIndex, lastIndex + original.length, 'end');
 
-      // Trigger input event so the page knows content changed
-      const inputEvent = new InputEvent('input', {
-        bubbles: true,
-        cancelable: false,
-        inputType: 'insertText',
-        data: replacement
-      });
-      activeElement.dispatchEvent(inputEvent);
+        // Trigger input event manually since setRangeText doesn't
+        const inputEvent = new InputEvent('input', {
+          bubbles: true,
+          cancelable: false,
+          inputType: 'insertText',
+          data: replacement
+        });
+        activeElement.dispatchEvent(inputEvent);
+      } catch (e) {
+        console.error('[Content Script] setRangeText failed:', e);
+        // Fallback to old method if setRangeText fails (unlikely for standard inputs)
+        const newText = currentText.substring(0, lastIndex) + replacement + currentText.substring(lastIndex + original.length);
+        activeElement.value = newText;
+        activeElement.selectionStart = activeElement.selectionEnd = lastIndex + replacement.length;
+      }
     } else {
       // For contentEditable - select all and paste new text
+      // Recalculate newText for contentEditable
+      const newText = currentText.substring(0, lastIndex) + replacement + currentText.substring(lastIndex + original.length);
+
       try {
         // 1. Write to clipboard FIRST
         try { await navigator.clipboard.writeText(newText); } catch (err) { console.error("Clipboard write failed", err); }
@@ -394,10 +404,10 @@ console.log(
         pasteEvent.clipboardData.setData('text/plain', newText);
         activeElement.dispatchEvent(pasteEvent);
 
-        // 5. Restore cursor position
-        setTimeout(() => {
-          setCaretPosition(activeElement, newCursorPos);
-        }, 50);
+        // Attempt to restore cursor (tricky in contentEditable but we can try)
+        // We can use the trySlateReplacement logic or similar if needed, 
+        // but for now let's rely on the paste event behavior or user interaction.
+        // Ideally we should set the caret after the replacement.
       } catch (e) {
         console.error('[Content Script] Error in replaceLastWord:', e);
       }
@@ -503,25 +513,6 @@ console.log(
       return;
     }
 
-    // Hotkeys for Word Picker Items: Alt+1, Alt+2, ..., Alt+9, Alt+0
-    if (e.altKey && /^[0-9]$/.test(e.key)) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const num = parseInt(e.key);
-      // Alt+1 = index 0, Alt+2 = index 1, ..., Alt+9 = index 8, Alt+0 = index 9
-      const index = num === 0 ? 9 : num - 1;
-
-      if (settings.wordPickerItems && settings.wordPickerItems[index]) {
-        const text = settings.wordPickerItems[index];
-        console.log(`[Content Script] Alt+${e.key} pressed, inserting:`, text);
-        insertTextAtCursor(text);
-      } else {
-        console.log(`[Content Script] Alt+${e.key} pressed, but no item at index ${index}`);
-      }
-      return;
-    }
-
     // Autocomplete Navigation - Only handle if autocomplete is visible
     if (autocompleteOverlay && autocompleteOverlay.style.display === 'block') {
       if (e.key === 'ArrowDown') {
@@ -608,11 +599,11 @@ console.log(
           if (replacement !== undefined) {
             console.log('[Content Script] Auto-replacement triggered for', finishedWord, '->', replacement);
             // Delete the word AND the trigger character, then insert replacement + space
-            replaceLastWord(finishedWord + charBefore, replacement + charBefore);
+            replaceLastWord(finishedWord + charBefore, replacement + charBefore, cursorPos);
           } else if (settings.removedWords && settings.removedWords.includes(finishedWord.toLowerCase())) {
             console.log('[Content Script] Auto-remove triggered for', finishedWord);
             // Delete the word AND the trigger character, then insert just the trigger
-            replaceLastWord(finishedWord + charBefore, charBefore);
+            replaceLastWord(finishedWord + charBefore, charBefore, cursorPos);
           }
         }
       }
@@ -1008,8 +999,14 @@ console.log(
       console.log('[Content Script] Confirming autocomplete suggestion:', item.key, '->', item.value);
 
       if (activeElement) {
-        // Use copy-paste method for autocomplete
-        replaceLastWord(currentWord, item.value);
+
+        // Add a space after the replacement if it doesn't have one
+        let replacementValue = item.value;
+        if (!replacementValue.endsWith(' ')) {
+          replacementValue += ' ';
+        }
+
+        replaceLastWord(currentWord, replacementValue, cursorPos);
       }
     }
     hideSuggestions();

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproduction Case</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #log { background: #f0f0f0; padding: 10px; border: 1px solid #ccc; height: 200px; overflow: auto; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Autocomplete Bug Reproduction</h1>
+    <textarea id="editor" rows="10" cols="50"></textarea>
+    <div id="log"></div>
+
+    <script>
+        // Mock Chrome API
+        window.chrome = {
+            storage: {
+                sync: {
+                    get: (keys, callback) => {
+                        // Simulate settings
+                        const settings = {
+                            enabled: true,
+                            shortcuts: {
+                                "sp": "[short pause]"
+                            },
+                            replacements: {
+                                "sp": "[short pause]" 
+                            }
+                        };
+                        console.log("[Mock] Returning settings:", settings);
+                        callback(settings);
+                    }
+                },
+                onChanged: {
+                    addListener: () => {}
+                }
+            },
+            runtime: {
+                getURL: (path) => path
+            }
+        };
+
+        // Logger
+        const logDiv = document.getElementById('log');
+        const originalConsoleLog = console.log;
+        console.log = (...args) => {
+            originalConsoleLog(...args);
+            logDiv.textContent += args.join(' ') + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+    </script>
+
+    <!-- Load content.js (we will paste it here via the tool) -->
+    <script src="reproduce_content.js"></script>
+
+    <script>
+        async function runTest() {
+            console.log("--- Starting Test ---");
+            const editor = document.getElementById('editor');
+            editor.focus();
+            
+            // Helper to simulate typing
+            const typeChar = (char) => {
+                console.log(`Typing: '${char}'`);
+                
+                // 1. Keydown
+                const keydown = new KeyboardEvent('keydown', { key: char, bubbles: true });
+                editor.dispatchEvent(keydown);
+                
+                // 2. Input (update value first)
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const val = editor.value;
+                editor.value = val.slice(0, start) + char + val.slice(end);
+                editor.selectionStart = editor.selectionEnd = start + 1;
+                
+                const input = new InputEvent('input', { 
+                    inputType: 'insertText', 
+                    data: char, 
+                    bubbles: true 
+                });
+                editor.dispatchEvent(input);
+                
+                // 3. Keyup
+                const keyup = new KeyboardEvent('keyup', { key: char, bubbles: true });
+                editor.dispatchEvent(keyup);
+                
+                // Wait a bit for async logic
+                return new Promise(resolve => setTimeout(resolve, 100));
+            };
+
+            // Simulate typing "specially"
+            const text = "specially";
+            for (const char of text) {
+                await typeChar(char);
+            }
+
+            console.log("--- Test Complete ---");
+            console.log("Final Text:", editor.value);
+            
+            if (editor.value === "specially") {
+                console.log("RESULT: PASS (No incorrect replacement)");
+            } else {
+                console.log("RESULT: FAIL (Incorrect replacement occurred)");
+            }
+        }
+
+        // Run test after a short delay to allow content.js to init
+        setTimeout(runTest, 1000);
+    </script>
+</body>
+</html>
