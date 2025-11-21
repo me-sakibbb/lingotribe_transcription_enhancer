@@ -1041,17 +1041,29 @@ console.log(
         return '[' + cleaned + ']';
       });
 
-      // Step 3: Ensure single space after punctuation
+      // Step 3: Add space before [ and after ]
+      // Add space before [ if not already present (and not at start of string)
+      newText = newText.replace(/(\S)\[/g, '$1 [');
+      // Add space after ] if not already present (and not at end of string or before punctuation)
+      newText = newText.replace(/\](\S)/g, '] $1');
+
+      // Step 4: Capitalize first letter after ] followed by space
+      // This handles cases like ". [mm] hello" -> ". [mm] Hello"
+      newText = newText.replace(/\]\s+([a-z])/g, (match, letter) => {
+        return '] ' + letter.toUpperCase();
+      });
+
+      // Step 5: Ensure single space after punctuation
       if (settings.formatting && settings.formatting.spaceAfterPunctuation) {
         newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
       }
 
-      // Step 4: Remove double spaces
+      // Step 6: Remove double spaces
       if (settings.formatting && settings.formatting.removeDoubleSpaces) {
         newText = newText.replace(/ +/g, ' ');
       }
 
-      // Step 5: Auto-capitalize sentences
+      // Step 7: Auto-capitalize sentences
       if (settings.formatting && settings.formatting.autoCapitalize) {
         newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
       }
@@ -1119,22 +1131,31 @@ console.log(
         return '[' + cleaned + ']';
       });
 
-      // Step 5: Ensure single space after punctuation (Alt+F functionality)
+      // Step 5: Add space before [ and after ] (Alt+F functionality)
+      newText = newText.replace(/(\S)\[/g, '$1 [');
+      newText = newText.replace(/\](\S)/g, '] $1');
+
+      // Step 6: Capitalize first letter after ] followed by space (Alt+F functionality)
+      newText = newText.replace(/\]\s+([a-z])/g, (match, letter) => {
+        return '] ' + letter.toUpperCase();
+      });
+
+      // Step 7: Ensure single space after punctuation (Alt+F functionality)
       if (settings.formatting && settings.formatting.spaceAfterPunctuation) {
         newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
       }
 
-      // Step 6: Remove double spaces (Alt+F functionality)
+      // Step 8: Remove double spaces (Alt+F functionality)
       if (settings.formatting && settings.formatting.removeDoubleSpaces) {
         newText = newText.replace(/ +/g, ' ');
       }
 
-      // Step 7: Auto-capitalize sentences (Alt+F functionality)
+      // Step 9: Auto-capitalize sentences (Alt+F functionality)
       if (settings.formatting && settings.formatting.autoCapitalize) {
         newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
       }
 
-      // Step 8: Smart quotes (Alt+F functionality)
+      // Step 10: Smart quotes (Alt+F functionality)
       if (settings.formatting && settings.formatting.smartQuotes) {
         newText = newText.replace(/"/g, '\u201C').replace(/'/g, '\u2019');
       }
