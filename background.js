@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS = {
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Lingotribe Transcription Enhancer Installed");
-  
+
   // Initialize settings if they don't exist
   chrome.storage.sync.get(null, (items) => {
     const newSettings = {};
@@ -55,4 +55,28 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.storage.sync.set(newSettings);
     }
   });
+});
+
+// Handle messages from content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'OPEN_LOGIN_PAGE') {
+    // Open login page in a new tab
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('login.html')
+    });
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === 'AUTH_REVOKED') {
+    // Broadcast to all tabs
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, message).catch(() => {
+          // Ignore errors for tabs that don't have content script
+        });
+      });
+    });
+    return true;
+  }
 });

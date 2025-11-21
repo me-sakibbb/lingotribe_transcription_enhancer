@@ -17,6 +17,40 @@ console.log(
 );
 
 (async function () {
+  // --- Authentication Check ---
+  console.log('[Content Script] Checking authentication...');
+
+  // Wait for auth manager to be available
+  if (typeof authManager === 'undefined') {
+    console.error('[Content Script] Auth manager not loaded!');
+    return;
+  }
+
+  // Initialize and check authentication
+  await authManager.init();
+  const isAuthenticated = await authManager.isUserAuthenticated();
+
+  if (!isAuthenticated) {
+    console.warn('[Content Script] User not authenticated. Extension disabled.');
+
+    // Show login prompt
+    showAuthPrompt();
+
+    // Exit - don't initialize extension features
+    return;
+  }
+
+  console.log('[Content Script] User authenticated:', authManager.getUserEmail());
+
+  // Listen for auth revoked
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'AUTH_REVOKED') {
+      console.warn('[Content Script] Authentication revoked. Disabling extension...');
+      showAuthPrompt();
+      // Optionally reload the page or disable features
+    }
+  });
+
   // --- State & Config ---
   let settings = {};
   let activeElement = null;
@@ -48,6 +82,70 @@ console.log(
       loadSettings();
     }
   });
+
+  // --- Auth Prompt UI ---
+  function showAuthPrompt() {
+    // Remove existing prompt if any
+    const existing = document.getElementById('lingotribe-auth-prompt');
+    if (existing) existing.remove();
+
+    // Create auth prompt overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'lingotribe-auth-prompt';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2147483647;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    `;
+
+    const prompt = document.createElement('div');
+    prompt.style.cssText = `
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      max-width: 400px;
+    `;
+
+    prompt.innerHTML = `
+      <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
+      <h2 style="color: #333; margin-bottom: 10px;">Authentication Required</h2>
+      <p style="color: #666; margin-bottom: 30px;">
+        Please sign in to use Lingotribe Transcription Enhancer
+      </p>
+      <button id="lingotribe-signin-btn" style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      ">
+        Sign In with Google
+      </button>
+    `;
+
+    overlay.appendChild(prompt);
+    document.body.appendChild(overlay);
+
+    // Add click handler
+    document.getElementById('lingotribe-signin-btn').addEventListener('click', () => {
+      // Send message to background script to open login page
+      chrome.runtime.sendMessage({ type: 'OPEN_LOGIN_PAGE' });
+    });
+  }
 
   // --- UI Injection (Shadow DOM) ---
 
