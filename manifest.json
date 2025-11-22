@@ -34,7 +34,9 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.lingotribe.world/*"
+        "*://*.lingotribe.world/*",
+        "http://localhost:3000/*",
+        "https://localhost:3000/*"
       ],
       "js": [
         "firebase-config.js",
