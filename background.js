@@ -3,22 +3,47 @@
 
 const DEFAULT_SETTINGS = {
   shortcuts: {
-    "brb": "be right back",
-    "omw": "on my way",
-    "email": "user@example.com",
-    "shrug": "¯\\_(ツ)_/¯",
+    "ch": "[chuckles]",
+    "dr": "drawn out",
+    "em": "emphasizes",
+    "la": "[laughs]",
+    "mh": "[mm-hmm]",
+    "sg": "[sigh]",
+    "sml": "[smacks lips]",
     "sp": "[short pause]"
   },
   replacements: {
-    "brb": "be right back",
-    "omw": "on my way",
-    "teh": "the",
+    "Hmm": "[hmm]",
+    "Mm-hmm": "[mm-hmm]",
+    "cant": "can't",
     "dont": "don't",
-    "cant": "can't"
+    "mhm": "[mhm]",
+    "teh": "the"
   },
   removedWords: ["literally", "basically"],
-  formattingRemovedWords: ["[inhale]", "[exhale]", "[um]", "[uh]", "[hmm]"],
-  wordPickerItems: ["Sincerely,", "Best regards,", "Thank you,"],
+  formattingRemovedWords: [
+    "[inhale]",
+    "[exhale]",
+    "[inhales]",
+    "[exhales]",
+    "[breathing]",
+    "[breathes in]",
+    "[breathes out]",
+    "[breaths in]",
+    "[breaths out]",
+    "[mount noises]"
+  ],
+  wordPickerItems: [
+    "[uh]",
+    "[um]",
+    "[uh-huh]",
+    "[mm-hmm]",
+    "[short pause]",
+    "[hmm]",
+    "[chuckle]",
+    "Okay.",
+    "Yeah."
+  ],
   formatting: {
     autoCapitalize: true,
     smartQuotes: true,
