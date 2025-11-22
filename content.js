@@ -210,6 +210,29 @@ console.log(
         gap: 6px;
         align-items: center;
       }
+      .picker-drag-handle {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        cursor: move;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        font-size: 16px;
+        user-select: none;
+        pointer-events: auto;
+      }
+      .picker-drag-handle:hover {
+        color: #fff;
+      }
+      .picker-drag-handle::before {
+        content: '⋮⋮';
+        letter-spacing: -2px;
+      }
       .picker-header {
         display: none;
       }
@@ -218,6 +241,7 @@ console.log(
         flex-direction: row;
         gap: 6px;
         padding: 0;
+        padding-left: 30px;
         overflow: visible;
         max-height: none;
         align-items: center;
@@ -302,6 +326,7 @@ console.log(
     picker.className = 'word-picker hidden';
 
     picker.innerHTML = `
+      <div class="picker-drag-handle" id="drag-handle" title="Drag to move"></div>
       <div class="picker-content" id="picker-list"></div>
       <button class="picker-close" id="close-picker">×</button>
     `;
@@ -312,6 +337,58 @@ console.log(
     shadow.appendChild(dropdown);
     shadow.appendChild(picker);
     document.body.appendChild(host);
+
+    // Make picker draggable
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    const dragHandle = picker.querySelector('#drag-handle');
+
+    dragHandle.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    function dragStart(e) {
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
+
+      if (e.target === dragHandle) {
+        isDragging = true;
+        picker.style.transition = 'none';
+      }
+    }
+
+    function drag(e) {
+      if (isDragging) {
+        e.preventDefault();
+
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        setTranslate(currentX, currentY, picker);
+      }
+    }
+
+    function dragEnd(e) {
+      if (isDragging) {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+        picker.style.transition = 'all 0.3s ease';
+      }
+    }
+
+    function setTranslate(xPos, yPos, el) {
+      el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+    }
 
     // Populate Picker
     const renderPicker = () => {
