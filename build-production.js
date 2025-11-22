@@ -9,14 +9,14 @@ const obfuscationOptions = {
     controlFlowFlatteningThreshold: 0.75,
     deadCodeInjection: true,
     deadCodeInjectionThreshold: 0.4,
-    debugProtection: true,
-    debugProtectionInterval: 2000,
+    debugProtection: false,  // Disabled to prevent auth issues
+    debugProtectionInterval: 0,
     disableConsoleOutput: false,
     identifierNamesGenerator: 'hexadecimal',
     log: false,
     numbersToExpressions: true,
     renameGlobals: false,
-    selfDefending: true,
+    selfDefending: false,  // Disabled to prevent auth issues
     simplify: true,
     splitStrings: true,
     splitStringsChunkLength: 10,
@@ -34,6 +34,34 @@ const obfuscationOptions = {
     transformObjectKeys: true,
     unicodeEscapeSequence: false
 };
+
+// Lighter obfuscation for auth-related files (to prevent breaking functionality)
+const lightObfuscationOptions = {
+    compact: true,
+    controlFlowFlattening: false,  // Disabled for auth
+    deadCodeInjection: false,  // Disabled for auth
+    debugProtection: false,
+    disableConsoleOutput: false,
+    identifierNamesGenerator: 'hexadecimal',
+    log: false,
+    numbersToExpressions: false,  // Disabled for auth
+    renameGlobals: false,
+    selfDefending: false,
+    simplify: true,
+    splitStrings: false,  // Disabled for auth
+    stringArray: true,
+    stringArrayEncoding: ['base64'],
+    stringArrayThreshold: 0.5,  // Lower threshold
+    transformObjectKeys: false,  // Disabled for auth
+    unicodeEscapeSequence: false
+};
+
+// Files that need lighter obfuscation (auth-related)
+const lightObfuscationFiles = [
+    'auth.js',
+    'firebase-config.js',
+    'login.js'
+];
 
 // Files to obfuscate
 const jsFiles = [
@@ -77,9 +105,14 @@ jsFiles.forEach(file => {
 
     if (fs.existsSync(sourcePath)) {
         const code = fs.readFileSync(sourcePath, 'utf8');
-        const obfuscatedCode = JavaScriptObfuscator.obfuscate(code, obfuscationOptions).getObfuscatedCode();
+
+        // Use lighter obfuscation for auth-related files
+        const options = lightObfuscationFiles.includes(file) ? lightObfuscationOptions : obfuscationOptions;
+        const obfuscationType = lightObfuscationFiles.includes(file) ? 'light obfuscation' : 'full obfuscation';
+
+        const obfuscatedCode = JavaScriptObfuscator.obfuscate(code, options).getObfuscatedCode();
         fs.writeFileSync(targetPath, obfuscatedCode);
-        console.log(`  ✓ ${file} - obfuscated`);
+        console.log(`  ✓ ${file} - ${obfuscationType}`);
     } else {
         console.log(`  ⚠ ${file} - not found, skipping`);
     }

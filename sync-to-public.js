@@ -18,13 +18,15 @@ const CONFIG = {
     // Path to your private repository (current location)
     privateRepo: __dirname,
 
-    // Path to your public repository (you'll create this)
-    // Change this to your actual public repo path
-    publicRepo: path.join(__dirname, '..', 'lingotribe-extension-public'),
+    // Public repository name
+    publicRepoName: 'lingotribe_transcription_enhancer_prod',
 
     // Production build folder name
     buildFolder: 'production-build'
 };
+
+// Calculate public repo path (one level up from current directory)
+CONFIG.publicRepo = path.join(CONFIG.privateRepo, '..', CONFIG.publicRepoName);
 
 console.log('🚀 Starting sync to public repository...\n');
 
@@ -45,10 +47,8 @@ try {
 console.log('📂 Step 2: Checking public repository...');
 if (!fs.existsSync(CONFIG.publicRepo)) {
     console.log('⚠️  Public repository not found at:', CONFIG.publicRepo);
-    console.log('\n📝 To set up the public repository:');
-    console.log('   1. Create a new public repository on GitHub');
-    console.log('   2. Clone it to:', CONFIG.publicRepo);
-    console.log('   3. Run this script again\n');
+    console.log('\n📝 Please run setup-github.js first to create the public repository:');
+    console.log('   node setup-github.js\n');
     process.exit(1);
 }
 console.log('✅ Public repository found\n');
