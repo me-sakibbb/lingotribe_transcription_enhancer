@@ -1125,11 +1125,28 @@ console.log(
 
       // Step 1: Remove specific words/phrases from formattingRemovedWords list
       if (settings.formattingRemovedWords && Array.isArray(settings.formattingRemovedWords)) {
-        settings.formattingRemovedWords.forEach(word => {
-          const escapedWord = escapeRegExp(word);
-          const regex = new RegExp(escapedWord, 'g');
+        settings.formattingRemovedWords.forEach(phrase => {
+          // Escape special regex characters
+          const escapedPhrase = escapeRegExp(phrase);
+          // Replace multiple spaces in the pattern with \s+ to match any whitespace
+          const flexiblePattern = escapedPhrase.replace(/\s+/g, '\\s+');
+          // Create case-insensitive regex with global flag
+          const regex = new RegExp(flexiblePattern, 'gi');
           newText = newText.replace(regex, '');
         });
+        // Comprehensive cleanup after removal
+        newText = newText
+          .replace(/\s*,\s*/g, ', ')    // Normalize comma spacing
+          .replace(/, ,/g, ', ')         // Remove double commas
+          .replace(/\s{2,}/g, ' ')       // Remove multiple spaces
+          .replace(/\s+\./g, '.')        // Remove space before period
+          .replace(/\s+,/g, ',')         // Remove space before comma
+          .replace(/\.,/g, '.')          // Remove comma after period
+          .trim();
+        // Remove trailing comma
+        if (newText.endsWith(',')) {
+          newText = newText.slice(0, -1).trim();
+        }
       }
 
       // Step 2: Process text inside brackets [...]
@@ -1145,25 +1162,26 @@ console.log(
       // Add space after ] if not already present (and not at end of string or before punctuation)
       newText = newText.replace(/\](\S)/g, '] $1');
 
-      // Step 4: Capitalize first letter after ] followed by space
-      // This handles cases like ". [mm] hello" -> ". [mm] Hello"
-      newText = newText.replace(/\]\s+([a-z])/g, (match, letter) => {
-        return '] ' + letter.toUpperCase();
-      });
-
-      // Step 5: Ensure single space after punctuation
+      // Step 4: Ensure single space after punctuation
       if (settings.formatting && settings.formatting.spaceAfterPunctuation) {
         newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
       }
 
-      // Step 6: Remove double spaces
+      // Step 5: Remove double spaces
       if (settings.formatting && settings.formatting.removeDoubleSpaces) {
         newText = newText.replace(/ +/g, ' ');
       }
 
-      // Step 7: Auto-capitalize sentences
+      // Step 6: Auto-capitalize sentences (including after brackets at sentence start)
       if (settings.formatting && settings.formatting.autoCapitalize) {
+        // First, capitalize after sentence-ending punctuation
         newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
+
+        // Then, handle brackets at the start of sentences
+        // This matches: (start of text OR sentence-ending punctuation + space) + bracket + content + bracket + space + lowercase letter
+        newText = newText.replace(/(^|[.!?]\s+)(\[[^\]]+\]\s+)([a-z])/g, (match, sentenceStart, bracket, letter) => {
+          return sentenceStart + bracket + letter.toUpperCase();
+        });
       }
 
       // Smart quotes (optional)
@@ -1215,11 +1233,28 @@ console.log(
 
       // Step 3: Remove specific words/phrases from formattingRemovedWords list (Alt+F functionality)
       if (settings.formattingRemovedWords && Array.isArray(settings.formattingRemovedWords)) {
-        settings.formattingRemovedWords.forEach(word => {
-          const escapedWord = escapeRegExp(word);
-          const regex = new RegExp(escapedWord, 'g');
+        settings.formattingRemovedWords.forEach(phrase => {
+          // Escape special regex characters
+          const escapedPhrase = escapeRegExp(phrase);
+          // Replace multiple spaces in the pattern with \s+ to match any whitespace
+          const flexiblePattern = escapedPhrase.replace(/\s+/g, '\\s+');
+          // Create case-insensitive regex with global flag
+          const regex = new RegExp(flexiblePattern, 'gi');
           newText = newText.replace(regex, '');
         });
+        // Comprehensive cleanup after removal
+        newText = newText
+          .replace(/\s*,\s*/g, ', ')    // Normalize comma spacing
+          .replace(/, ,/g, ', ')         // Remove double commas
+          .replace(/\s{2,}/g, ' ')       // Remove multiple spaces
+          .replace(/\s+\./g, '.')        // Remove space before period
+          .replace(/\s+,/g, ',')         // Remove space before comma
+          .replace(/\.,/g, '.')          // Remove comma after period
+          .trim();
+        // Remove trailing comma
+        if (newText.endsWith(',')) {
+          newText = newText.slice(0, -1).trim();
+        }
       }
 
       // Step 4: Process text inside brackets [...] (Alt+F functionality)
@@ -1233,24 +1268,26 @@ console.log(
       newText = newText.replace(/(\S)\[/g, '$1 [');
       newText = newText.replace(/\](\S)/g, '] $1');
 
-      // Step 6: Capitalize first letter after ] followed by space (Alt+F functionality)
-      newText = newText.replace(/\]\s+([a-z])/g, (match, letter) => {
-        return '] ' + letter.toUpperCase();
-      });
-
-      // Step 7: Ensure single space after punctuation (Alt+F functionality)
+      // Step 6: Ensure single space after punctuation (Alt+F functionality)
       if (settings.formatting && settings.formatting.spaceAfterPunctuation) {
         newText = newText.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
       }
 
-      // Step 8: Remove double spaces (Alt+F functionality)
+      // Step 7: Remove double spaces (Alt+F functionality)
       if (settings.formatting && settings.formatting.removeDoubleSpaces) {
         newText = newText.replace(/ +/g, ' ');
       }
 
-      // Step 9: Auto-capitalize sentences (Alt+F functionality)
+      // Step 8: Auto-capitalize sentences (including after brackets at sentence start)
       if (settings.formatting && settings.formatting.autoCapitalize) {
+        // First, capitalize after sentence-ending punctuation
         newText = newText.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
+
+        // Then, handle brackets at the start of sentences
+        // This matches: (start of text OR sentence-ending punctuation + space) + bracket + content + bracket + space + lowercase letter
+        newText = newText.replace(/(^|[.!?]\s+)(\[[^\]]+\]\s+)([a-z])/g, (match, sentenceStart, bracket, letter) => {
+          return sentenceStart + bracket + letter.toUpperCase();
+        });
       }
 
       // Step 10: Smart quotes (Alt+F functionality)

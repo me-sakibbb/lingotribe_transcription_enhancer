@@ -139,7 +139,8 @@
             <ul>
                 <li><strong>Space Before [</strong> - Automatically adds a space before opening bracket if missing</li>
                 <li><strong>Space After ]</strong> - Automatically adds a space after closing bracket if missing</li>
-                <li><strong>Capitalize After ]</strong> - Capitalizes the first letter after a closing bracket</li>
+                <li><strong>Smart Capitalization</strong> - Only capitalizes after brackets when they appear at the
+                    start of a sentence</li>
             </ul>
         </div>
 
@@ -147,31 +148,31 @@
             <h3>📝 Examples</h3>
 
             <div class="example">
-                <div class="label">Example 1: Missing spaces around brackets</div>
-                <div class="before">Before: I went there.[mm]hello.</div>
+                <div class="label">Example 1: Bracket in middle of sentence (NO capitalization)</div>
+                <div class="before">Before: He was [uh] doing this.</div>
                 <div class="arrow">↓</div>
-                <div class="after">After: I went there. [mm] Hello.</div>
+                <div class="after">After: He was [uh] doing this.</div>
             </div>
 
             <div class="example">
-                <div class="label">Example 2: Capitalization after bracket</div>
+                <div class="label">Example 2: Bracket at sentence start (YES capitalization)</div>
+                <div class="before">Before: [uh] he was doing this.</div>
+                <div class="arrow">↓</div>
+                <div class="after">After: [uh] He was doing this.</div>
+            </div>
+
+            <div class="example">
+                <div class="label">Example 3: Bracket after sentence-ending punctuation (YES capitalization)</div>
                 <div class="before">Before: She said yes. [short pause] then she left.</div>
                 <div class="arrow">↓</div>
                 <div class="after">After: She said yes. [short pause] Then she left.</div>
             </div>
 
             <div class="example">
-                <div class="label">Example 3: Multiple brackets</div>
-                <div class="before">Before: He paused[ah-huh]and continued[mm]with his story.</div>
+                <div class="label">Example 4: Multiple brackets in different positions</div>
+                <div class="before">Before: [laughter]that was funny. He paused[ah-huh]and continued.</div>
                 <div class="arrow">↓</div>
-                <div class="after">After: He paused [ah-huh] And continued [mm] With his story.</div>
-            </div>
-
-            <div class="example">
-                <div class="label">Example 4: Bracket at sentence start</div>
-                <div class="before">Before: [laughter]that was funny.</div>
-                <div class="arrow">↓</div>
-                <div class="after">After: [laughter] That was funny.</div>
+                <div class="after">After: [laughter] That was funny. He paused [ah-huh] and continued.</div>
             </div>
         </div>
 
@@ -180,7 +181,7 @@
             <p>Paste your text below and click "Apply Formatting" to see the new rules in action:</p>
 
             <textarea id="testInput"
-                placeholder="Enter text with brackets here, e.g., 'I went there.[mm]hello.'">I went there.[mm]hello. She said yes.[short pause]then she left.</textarea>
+                placeholder="Enter text with brackets here, e.g., 'He was [uh] doing this.'">He was [uh] doing this. [uh] he was doing this.</textarea>
 
             <button onclick="applyFormatting()">Apply Formatting</button>
 
@@ -208,19 +209,21 @@
             // Step 3: Add space after ] if not already present
             text = text.replace(/\](\S)/g, '] $1');
 
-            // Step 4: Capitalize first letter after ] followed by space
-            text = text.replace(/\]\s+([a-z])/g, (match, letter) => {
-                return '] ' + letter.toUpperCase();
-            });
-
-            // Step 5: Ensure single space after punctuation
+            // Step 4: Ensure single space after punctuation
             text = text.replace(/([.!?,;:])(\s*)(?=\S)/g, '$1 ');
 
-            // Step 6: Remove double spaces
+            // Step 5: Remove double spaces
             text = text.replace(/ +/g, ' ');
 
-            // Step 7: Auto-capitalize sentences
+            // Step 6: Auto-capitalize sentences (including after brackets at sentence start)
+            // First, capitalize after sentence-ending punctuation
             text = text.replace(/(?:^|[.!?]\s+)([a-z])/g, (m) => m.toUpperCase());
+
+            // Then, handle brackets at the start of sentences
+            // This matches: (start of text OR sentence-ending punctuation + space) + bracket + content + bracket + space + lowercase letter
+            text = text.replace(/(^|[.!?]\s+)(\[[^\]]+\]\s+)([a-z])/g, (match, sentenceStart, bracket, letter) => {
+                return sentenceStart + bracket + letter.toUpperCase();
+            });
 
             // Final cleanup
             output.value = text.trim();

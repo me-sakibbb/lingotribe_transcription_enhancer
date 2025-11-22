@@ -1,0 +1,23 @@
+{
+  "name": "lt-automation",
+  "version": "1.0.0",
+  "description": "A powerful Chrome extension designed to enhance text input with automatic corrections, formatting, and transcription cleanup features. Perfect for transcriptionists, writers, and anyone who wants to streamline their text editing workflow.",
+  "main": "auth.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/me-sakibbb/lingotribe_transcription_enhancer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/me-sakibbb/lingotribe_transcription_enhancer/issues"
+  },
+  "homepage": "https://github.com/me-sakibbb/lingotribe_transcription_enhancer#readme",
+  "dependencies": {
+    "javascript-obfuscator": "^4.1.1"
+  }
+}

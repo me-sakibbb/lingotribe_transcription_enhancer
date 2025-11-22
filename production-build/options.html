@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lingotribe Transcription Enhancer - Settings</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 2rem; background: #f9f9f9; max-width: 800px; margin: 0 auto; }
+    h1 { border-bottom: 2px solid #3e8e41; padding-bottom: 10px; color: #333; }
+    h2 { color: #555; margin-top: 2rem; }
+    
+    .section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    label { display: block; margin: 10px 0; font-weight: 500; }
+    input[type="text"], textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    
+    .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .row input { flex: 1; }
+    button { padding: 8px 16px; background: #3e8e41; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #2c662e; }
+    button.remove { background: #d32f2f; }
+    button.remove:hover { background: #9a0007; }
+    
+    .list-container { max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px; }
+    
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: #fff; padding: 10px 20px; border-radius: 4px; opacity: 0; transition: opacity 0.3s; }
+    
+    kbd { 
+      background: #f4f4f4; 
+      border: 1px solid #ccc; 
+      border-radius: 3px; 
+      padding: 2px 6px; 
+      font-family: monospace; 
+      font-size: 0.9em;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Lingotribe Transcription Enhancer - Settings</h1>
+
+  <div class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+    <h2 style="color: white; margin-top: 0;">Quick Start Guide</h2>
+    <p style="margin: 10px 0;"><strong>Keyboard Shortcuts:</strong></p>
+    <ul style="margin: 5px 0; padding-left: 20px;">
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+R</kbd> - Apply bulk replacements to selected text</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+F</kbd> - Format selected text (or entire field)</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+N</kbd> - Convert word numbers to digits</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+A</kbd> - Apply ALL (Alt+R + Alt+F + Alt+N combined)</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Alt+P</kbd> - Show/hide floating word picker</li>
+      <li><kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Enter</kbd> or <kbd style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;">Tab</kbd> - Accept autocomplete suggestion</li>
+    </ul>
+    <p style="margin: 10px 0 0 0; font-size: 0.9rem; opacity: 0.9;">&#128161; Tip: Configure your preferences below and click "Save Settings" at the bottom.</p>
+  </div>
+
+  <div class="section">
+    <h2>General</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 15px;">
+      Control whether the extension is active. When disabled, all features (autocomplete, replacements, formatting) will be turned off.
+    </p>
+    <label>
+      <input type="checkbox" id="enabled"> Enable Extension
+    </label>
+  </div>
+
+  <div class="section">
+    <h2>Autocomplete Shortcuts</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+      <strong>How it works:</strong> As you type, matching shortcuts will appear in a dropdown menu. Press <kbd>Enter</kbd> or <kbd>Tab</kbd> to insert the full text.
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Examples:</strong><br>
+      &bull; Type "brb" &rarr; Suggests "be right back"<br>
+      &bull; Type "omw" &rarr; Suggests "on my way"<br>
+      &bull; Type "thx" &rarr; Suggests "thank you"<br>
+      &bull; Type "addr" &rarr; Suggests your full address
+    </div>
+    <div id="shortcuts-list" class="list-container"></div>
+    <div class="row" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+      <input type="text" id="new-shortcut-key" placeholder="Shortcut (e.g. 'brb')">
+      <input type="text" id="new-shortcut-val" placeholder="Expansion (e.g. 'Be Right Back')">
+      <button id="add-shortcut">Add</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Word Replacements</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+      <strong>How it works:</strong> When you type a word and press <kbd>Space</kbd>, it will automatically be replaced with the correct spelling. Also if you press <kbd>Alt+R</kbd>, it will replace all the words in the current input field. Perfect for fixing common typos!
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Examples:</strong><br>
+      &bull; Type "teh " &rarr; Automatically becomes "the "<br>
+      &bull; Type "cant " &rarr; Automatically becomes "can't "<br>
+      &bull; Type "dont " &rarr; Automatically becomes "don't "<br>
+      &bull; Type "recieve " &rarr; Automatically becomes "receive "
+    </div>
+    <div id="replacements-list" class="list-container"></div>
+    <div class="row" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+      <input type="text" id="new-replace-key" placeholder="Typo (e.g. 'teh')">
+      <input type="text" id="new-replace-val" placeholder="Correction (e.g. 'the')">
+      <button id="add-replace">Add</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Floating Word Picker Items</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+      <strong>How it works:</strong> Press <kbd>Alt+P</kbd> to show/hide a floating window with quick-access words or phrases. Click any item to insert it at your cursor.
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Use cases:</strong><br>
+      &bull; Frequently used phrases: "Thank you for your time", "Best regards"<br>
+      &bull; Technical terms: "JavaScript", "Python", "SQL"<br>
+      &bull; Emoji or special characters: "&#10003;", "&#10007;", "&rarr;"<br>
+      &bull; Common responses: "Yes, I agree", "No, thank you"
+    </div>
+    <textarea id="picker-items" rows="5" placeholder="Enter items, one per line&#10;Example:&#10;Thank you&#10;Best regards&#10;Looking forward"></textarea>
+  </div>
+
+  <div class="section">
+    <h2>Formatting Rules (Alt+F)</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+      <strong>How it works:</strong> Select text and press <kbd>Alt+F</kbd> to apply all enabled formatting rules. If no text is selected, it formats the entire input field.
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>What gets formatted:</strong><br>
+      1. Removes unwanted words (see list below)<br>
+      2. Cleans text inside brackets (lowercase, removes punctuation)<br>
+      3. Adds single space after punctuation<br>
+      4. Removes double spaces<br>
+      5. Capitalizes first letter of sentences
+    </div>
+    <label><input type="checkbox" id="fmt-caps"> Auto-Capitalize Sentences</label>
+    <label><input type="checkbox" id="fmt-space"> Remove Double Spaces</label>
+    <label><input type="checkbox" id="fmt-punctuation"> Single Space After Punctuation</label>
+    <label><input type="checkbox" id="fmt-quote"> Smart Quotes</label>
+    
+    <label><input type="checkbox" id="fmt-remove-words"> Enable Word Removal</label>
+    <p style="color: #666; font-size: 0.95rem; margin: 10px 0;">
+      These exact phrases will be completely removed when you press <kbd>Alt+F</kbd>. Useful for removing filler words from transcriptions.
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Common examples:</strong><br>
+      &bull; Audio cues: [inhale], [exhale], [cough], [pause]<br>
+      &bull; Filler words: [um], [uh], [hmm], [like]<br>
+      &bull; Editor notes: [music], [laughter], [background noise]<br>
+      <br>
+      <strong>Before:</strong> "So [um] I think [inhale] we should proceed."<br>
+      <strong>After:</strong> "So I think we should proceed."
+    </div>
+    <div id="formatting-removed-list" class="list-container"></div>
+    <div class="row" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+      <input type="text" id="new-formatting-removed" placeholder="Word to remove (e.g. '[inhale]')">
+      <button id="add-formatting-removed">Add</button>
+    </div>
+    
+    <h3 style="margin-top: 20px;">Number Conversion (Alt+N)</h3>
+    <label><input type="checkbox" id="fmt-convert-numbers"> Enable Word-to-Number Conversion</label>
+    <p style="color: #666; font-size: 0.95rem; margin: 10px 0;">
+      <strong>How it works:</strong> Press <kbd>Alt+N</kbd> to convert ALL number words to digits throughout the text.
+    </p>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Examples:</strong><br>
+      &bull; Input: "I have one apple, two oranges, and three bananas"<br>
+      &bull; Output: "I have 1 apple, 2 oranges, and 3 bananas"<br>
+      <br>
+      &bull; Input: "Chapter one discusses ten key points"<br>
+      &bull; Output: "Chapter 1 discusses 10 key points"<br>
+      <br>
+      &bull; Input: "twenty-five" (with hyphen)<br>
+      &bull; Output: "20-5" (converts each word separately)<br>
+      <br>
+      <strong>Supported:</strong> zero through nineteen, twenty, thirty, forty, fifty, sixty, seventy, eighty, ninety, hundred, thousand
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Apply All Transformations (Alt+A)</h2>
+    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
+      <strong>How it works:</strong> Press <kbd>Alt+A</kbd> to apply ALL transformations at once in a single operation. This is the most powerful shortcut that combines everything!
+    </p>
+    <div style="background: #fff3cd; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #ffc107;">
+      <strong>⚡ What Alt+A Does (in order):</strong><br>
+      <br>
+      <strong>Step 1: Word Replacements (Alt+R)</strong><br>
+      &bull; Fixes all typos and replaces shortcuts with full text<br>
+      <br>
+      <strong>Step 2: Number Conversion (Alt+N)</strong><br>
+      &bull; Converts word numbers to digits (if enabled)<br>
+      <br>
+      <strong>Step 3: Formatting (Alt+F)</strong><br>
+      &bull; Removes unwanted words (if enabled)<br>
+      &bull; Cleans text inside brackets<br>
+      &bull; Adds space after punctuation<br>
+      &bull; Removes double spaces<br>
+      &bull; Capitalizes sentences<br>
+      &bull; Applies smart quotes (if enabled)<br>
+    </div>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #3e8e41;">
+      <strong>Example:</strong><br>
+      <br>
+      <strong>Before:</strong><br>
+      "teh meeting has one hundred attendees[um]dont forget to email them"<br>
+      <br>
+      <strong>After Alt+A:</strong><br>
+      "The meeting has 100 attendees. Don't forget to email them"<br>
+      <br>
+      <em style="color: #666;">✓ Fixed "teh" → "the"</em><br>
+      <em style="color: #666;">✓ Converted "one hundred" → "100"</em><br>
+      <em style="color: #666;">✓ Removed "[um]"</em><br>
+      <em style="color: #666;">✓ Fixed "dont" → "don't"</em><br>
+      <em style="color: #666;">✓ Capitalized first letter</em><br>
+      <em style="color: #666;">✓ Added proper spacing</em>
+    </div>
+    <p style="color: #666; font-size: 0.95rem;">
+      <strong>💡 Tip:</strong> Alt+A respects all your checkbox settings above. Enable/disable features to customize what gets applied!
+    </p>
+  </div>
+
+  <button id="save-btn" style="width: 100%; font-size: 1.2rem; margin-top: 20px;">Save Settings</button>
+
+  <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
+    <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #666;">
+      <strong>Lingotribe Transcription Enhancer</strong> v2.1.0
+    </p>
+    <p style="margin: 0 0 10px 0; font-size: 0.85rem; color: #999;">
+      Created by <a href="https://github.com/me-sakibbb" target="_blank" style="color: #3e8e41; text-decoration: none; font-weight: 600;">me-sakibbb</a> & 
+      <a href="https://github.com/NuhalMunawar" target="_blank" style="color: #3e8e41; text-decoration: none; font-weight: 600;">NuhalMunawar</a>
+    </p>
+    <p style="margin: 0; font-size: 0.8rem; color: #999;">
+      © 2025 All Rights Reserved | 
+      <a href="https://github.com/me-sakibbb/lingotribe_transcription_enhancer" target="_blank" style="color: #3e8e41; text-decoration: none;">GitHub Repository</a>
+    </p>
+  </div>
+
+  <div id="toast" class="toast">Settings Saved!</div>
+
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Lingotribe Transcription Enhancer",
+  "version": "2.1.0",
+  "description": "Professional transcription enhancement with auto-correct, formatting, and smart text tools.",
+  "author": "me-sakibbb & NuhalMunawar",
+  "homepage_url": "https://github.com/me-sakibbb/lingotribe_transcription_enhancer",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "identity"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "oauth2": {
+    "client_id": "1010141748894-5rbncenvbcc3ddp212oacsag2fdvfu4n.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.lingotribe.world/*"
+      ],
+      "js": [
+        "firebase-config.js",
+        "auth.js",
+        "content.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "oauth-callback.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
